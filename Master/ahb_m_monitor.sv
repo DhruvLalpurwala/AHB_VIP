@@ -28,24 +28,23 @@ task run_phase(uvm_phase phase);
      @(posedge vif.HCLK);
         ahb_m_mon_item.HWRITE = `MON_IF_M.HWRITE;
         ahb_m_mon_item.HADDR = `MON_IF_M.HADDR;
-     `uvm_info(get_type_name, $sformatf("[Master Mon] Ready = %0b, Address = %0h , write = %0b",`MON_IF_M.HREADYOUT, `MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
+//      `uvm_info(get_type_name, $sformatf("[Master Mon] Ready = %0b, Address = %0h , write = %0b",`MON_IF_M.HREADYOUT, `MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
 
        if(`MON_IF_M.HWRITE) begin
          @(negedge vif.HCLK);
          ahb_m_mon_item.HWDATA = `MON_IF_M.HWDATA;
-         `uvm_info(get_type_name, $sformatf("[Master Mon Write] WData = %0h", `MON_IF_M.HWDATA), UVM_NONE);
+//          `uvm_info(get_type_name, $sformatf("[Master Mon Write] WData = %0h", `MON_IF_M.HWDATA), UVM_NONE);
        end
        else if(!`MON_IF_M.HWRITE) begin
          @(negedge vif.HCLK);
          ahb_m_mon_item.HRDATA = `MON_IF_M.HRDATA;
-         `uvm_info(get_type_name, $sformatf("[Master Mon READ] RData = %0h", `MON_IF_M.HRDATA), UVM_NONE);
+//          `uvm_info(get_type_name, $sformatf("[Master Mon READ] RData = %0h", `MON_IF_M.HRDATA), UVM_NONE);
        end
-     `uvm_info(get_type_name, $sformatf("[Master Mon 888] Ready = %0b, Data = %0h, RData = %0h, Address = %0h , write = %0b",`MON_IF_M.HREADYOUT, `MON_IF_M.HWDATA, `MON_IF_M.HRDATA, `MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
-//      @(negedge vif.HCLK);
+//      `uvm_info(get_type_name, $sformatf("[Master Mon 888] Ready = %0b, Data = %0h, RData = %0h, Address = %0h , write = %0b",`MON_IF_M.HREADYOUT, `MON_IF_M.HWDATA, `MON_IF_M.HRDATA, `MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
        ahb_m_item_port.write(ahb_m_mon_item);
-     `uvm_info(get_type_name, "Write Done", UVM_NONE);
+//      `uvm_info(get_type_name, "Write Done", UVM_NONE);
      
-//       `uvm_info(get_type_name, $sformatf("[Master Mon 888] Ready = %0b, Data = %0h, Address = %0h , write = %0b",`MON_IF_M.HREADYOUT, `MON_IF_M.HWDATA, `MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
+
     end
 endtask
 endclass
