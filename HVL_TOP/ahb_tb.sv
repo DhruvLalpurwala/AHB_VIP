@@ -1,5 +1,4 @@
-`include "uvm_macros.svh"
-import uvm_pkg::*;
+import ahb_pkg::*;
 
 `include "ahb_interface.sv"
 `include "ahb_test.sv"

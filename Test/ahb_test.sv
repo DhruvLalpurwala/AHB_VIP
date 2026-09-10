@@ -1,5 +1,3 @@
-`include "ahb_pkg.sv"
-
 class ahb_test extends uvm_test;
   `uvm_component_utils(ahb_test)
   
