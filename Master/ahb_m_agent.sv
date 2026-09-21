@@ -4,7 +4,7 @@ class ahb_m_agent extends uvm_agent;
   ahb_m_driver m_drv;
   ahb_m_sequencer m_seqr;
   ///Monitor
-  ahb_m_monitor m_mon;
+ // ahb_m_monitor m_mon;
   
   function new(string name = "ahb_m_agent", uvm_component parent = null);
     super.new(name,parent);
@@ -15,7 +15,7 @@ class ahb_m_agent extends uvm_agent;
     m_drv = ahb_m_driver::type_id::create("m_drv",this);
     m_seqr = ahb_m_sequencer::type_id::create("m_seqr",this);
     /////Monitor create
-    m_mon = ahb_m_monitor::type_id::create("m_mon",this);
+  //  m_mon = ahb_m_monitor::type_id::create("m_mon",this);
   endfunction
   
   function void connect_phase(uvm_phase phase);

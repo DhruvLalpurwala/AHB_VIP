@@ -119,7 +119,9 @@ class ahb_incr_burst extends ahb_m_sequence;
       req = ahb_seq_item::type_id::create("req");
       start_item(req);
         	assert(req.randomize with {HWRITE == 1'b1;
-      			   	   	   HBURST == INCR;});
+      			   	   	   HBURST == 2;
+					   HSIZE == BIT_32;});
+	req.print();
       finish_item(req); 
       //end
     endtask

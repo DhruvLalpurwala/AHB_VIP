@@ -26,7 +26,7 @@ class ahb_test extends uvm_test;
      
     join
 //         seq.start(e.s_agnt.s_seqr);
-    #65;
+    #200;
 
     phase.drop_objection(this);
   endtask

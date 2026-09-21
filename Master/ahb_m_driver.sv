@@ -9,6 +9,9 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
   bit [31:0] data_q [$];
   bit [31:0] current_addr;
   int i;
+
+  int wrap_boundary;
+  int upper_boundary;
   
   function new(string name = "ahb_m_driver", uvm_component parent = null);
     super.new(name,parent);
@@ -38,7 +41,7 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
   task address_phase(); 
     forever begin
       seq_item_port.get(req);
-	data_q.push_back(req.HWDATA);
+	data_q = req.HWDATA;
 	current_addr = req.HADDR;
 	
       if(!vif.HRESETn) begin
@@ -46,39 +49,60 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
         `DRIVE_IF_M.HADDR <= 0;
       end
       else begin
-        @(posedge vif.HCLK);
 	if (req.HBURST == SINGLE) begin
+		@(posedge vif.HCLK);
 		`DRIVE_IF_M.HBURST <= req.HBURST;
 		`DRIVE_IF_M.HTRANS <= NONSEQ;
 		`DRIVE_IF_M.HWRITE <= req.HWRITE;
 	        `DRIVE_IF_M.HADDR <= req.HADDR;
 		`DRIVE_IF_M.HSIZE <= req.HSIZE;
+		->done;
 	end
-	else if (req.HBURST == INCR) begin
-		for(i=0; i<5; i++) begin
+	else if (req.HBURST == INCR || req.HBURST == INCR4 || req.HBURST == INCR8 || req.HBURST == INCR16) begin
+		for(i=0; i < req.burst_length; i++) begin
         	@(posedge vif.HCLK);
 		`uvm_info(get_type_name, $sformatf("I = %0d", i), UVM_LOW);
-
+		   
 		   `DRIVE_IF_M.HTRANS <= (i == 0)? NONSEQ : SEQ;
 		   `DRIVE_IF_M.HBURST <= req.HBURST;
 		   `DRIVE_IF_M.HSIZE <= req.HSIZE;
 		   `DRIVE_IF_M.HADDR <= current_addr;
 		   `DRIVE_IF_M.HWRITE <= req.HWRITE;
 		   `uvm_info(get_type_name, $sformatf("[Master Driver 1] Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
-
+		   
 		   current_addr = current_addr + (1 << req.HSIZE);
-			
 		   ->done;
 		end
 	end
+	else if (req.HBURST == WRAP4 || req.HBURST == WRAP8 || req.HBURST == 16) begin
+
+		wrap_boundary = (current_addr/((1 << req.HSIZE)*req.burst_length))*((1 << req.HSIZE)*req.burst_length);
+		upper_boundary = wrap_boundary + ((1 << req.HSIZE)*req.burst_length);
+
+		for(i=0; i < req.burst_length; i++) begin
+		@(posedge vif.HCLK);
+		`uvm_info(get_type_name, $sformatf("I = %0d", i), UVM_LOW);
+		   `DRIVE_IF_M.HTRANS <= (i == 0)? NONSEQ : SEQ;
+		   `DRIVE_IF_M.HBURST <= req.HBURST;
+		   `DRIVE_IF_M.HSIZE <= req.HSIZE;
+		   `DRIVE_IF_M.HADDR <= current_addr; 
+		   `DRIVE_IF_M.HWRITE <= req.HWRITE;
+		   
+		   current_addr = current_addr + (1 << req.HSIZE);
+		   if (current_addr == upper_boundary) begin
+			current_addr = wrap_boundary;
+		   end
+
+		   -> done;
+		end
+	end
       end
-      //->done;
     end
   endtask
   
   task data_phase();
       forever begin
-       @done;
+        wait(done.triggered);
         if(!vif.HRESETn) begin
          `DRIVE_IF_M.HWDATA <= 0; 
         end
@@ -86,7 +110,6 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
          @(posedge vif.HCLK);
          if(vif.HWRITE)begin
 	  `DRIVE_IF_M.HWDATA <= data_q.pop_front();
-	  //`uvm_info(get_type_name, $sformatf("[Master Driver data] WData = %0h",vif.HWDATA), UVM_NONE);
          end
         end
 
@@ -102,7 +125,7 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
     wait(vif.HRESETn == 0);
     `DRIVE_IF_M.HWRITE <= 0;
     `DRIVE_IF_M.HADDR <= 0;
-    `DRIVE_IF_M.HWDATA <= 0;
+    `DRIVE_IF_M.HWDATA <= 0; 
     `DRIVE_IF_M.HTRANS <= IDLE;
   endtask
   

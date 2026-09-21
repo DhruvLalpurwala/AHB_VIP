@@ -6,6 +6,7 @@ interface ahb_if (input logic HCLK, HRESETn);
   logic [2:0] HBURST;
   logic [2:0] HSIZE;
   logic [1:0] HTRANS;
+  //logic burst_length;
   
   logic [31:0] HRDATA;
   logic HREADYOUT;
