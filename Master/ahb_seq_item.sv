@@ -43,6 +43,7 @@ class ahb_seq_item extends uvm_sequence_item;
   
   ////Constraints
   //constraint data {HWDATA inside {[10:20]};}
+  constraint address {HADDR == 32'hFFFFFFFE;}
   
 //   constraint size{HSIZE == BIT_8 -> HWSTRB == 4'h0;
 //                   HSIZE == BIT_16 -> HWSTRB == 4'h1;
@@ -51,12 +52,9 @@ class ahb_seq_item extends uvm_sequence_item;
 //   constraint transfer_type {HTRANS dist {IDLE:=10, BUSY:=10, NONSEQ:=20, SEQ:=60};
                            
   
-  constraint transfer_type2 { HTRANS == IDLE -> 
-                               HADDR == 32'h0;
-//                             	HWDATA == 32'h0;
-                            }
+
   
-  constraint size_datawidth {HSIZE inside {BIT_8, BIT_16, BIT_32};}
+  constraint size_datawidth {HSIZE inside {BIT_8};}
   
 //   constraint size {HSIZE == BIT_8 -> HADDR[0] == 0;
 //                    HSIZE == BIT_16 -> HADDR[1:0] == 2'b0;
@@ -66,25 +64,11 @@ class ahb_seq_item extends uvm_sequence_item;
 //                    HSIZE == BIT_256 -> HADDR[5:0] == 6'b0;
 //                    HSIZE == BIT_512 -> HADDR[6:0] == 7'b0;}
   
-  constraint burst{HBURST == SINGLE -> HTRANS == NONSEQ;
-                   HBURST inside {SINGLE, INCR};}
+  constraint burst{HBURST inside {SINGLE, INCR};}
   
 //   constraint burst_beat { HBURST == INCR -> burst_length == 1;
 //                           HBURST == INCR4 -> burst_length == 4;
 //                           HBURST == INCR8 -> burst_length == 8;
 //                           HBURST == INCR16 -> burst_length == 16;}
-  
-  
-  
-//   function post_randomize();
-//     static bit[31:0] ADDR_L;
-//     if (HWRITE == 1'b1) begin
-//       ADDR_L = HADDR;
-//     end
-//     else begin
-//       HADDR = ADDR_L;
-//     end
-//     `uvm_info(get_type_name, $sformatf(" HADDR = %0h, Address = %0h, Write = %0b", HADDR, ADDR_L, HWRITE), UVM_NONE);
-//   endfunction
 
 endclass 

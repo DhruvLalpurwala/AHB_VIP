@@ -5,7 +5,7 @@ class ahb_s_driver extends uvm_driver#(ahb_seq_item);
   
   virtual ahb_if vif;
   
-  logic [31:0] mem [logic[31:0]];
+  logic [31:0] mem [2**10];
   
   function new(string name = "ahb_s_driver", uvm_component parent = null);
     super.new(name,parent);
@@ -38,24 +38,25 @@ class ahb_s_driver extends uvm_driver#(ahb_seq_item);
       else begin
         `DRIVE_IF_S.HREADYOUT <= 1'b1;
 
-        `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Address = %0h, write = %0b", vif.HADDR,  vif.HWRITE), UVM_NONE);
+       //`uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Address = %0h, write = %0b", vif.HADDR,  vif.HWRITE), UVM_NONE);
 
         @(posedge vif.HCLK);
-        `uvm_info(get_type_name, $sformatf( "[Slave Driver 1] Data = %0h, Address = %0h, write = %0b",vif.HWDATA, vif.HADDR,  vif.HWRITE), UVM_NONE);
+        //`uvm_info(get_type_name, $sformatf( "[Slave Driver 1] Data = %0h, Address = %0h, write = %0b",vif.HWDATA, vif.HADDR,  vif.HWRITE), UVM_NONE);
 
         if( `DRIVE_IF_S.HWRITE) begin
           @(negedge vif.HCLK); 
-          `uvm_info(get_type_name, $sformatf( "[Slave Driver 2] Address = %0h, write = %0b, wdata = %h", `DRIVE_IF_S.HADDR, `DRIVE_IF_S.HWRITE, vif.HWDATA), UVM_NONE);
+          `uvm_info(get_type_name, $sformatf( "[Slave Driver] Address = %0h, write = %0b, wdata = %h", `DRIVE_IF_S.HADDR, `DRIVE_IF_S.HWRITE, vif.HWDATA), UVM_NONE);
           mem[ `DRIVE_IF_S.HADDR] <=  vif.HWDATA;
-          `uvm_info(get_type_name, $sformatf( "[Slave Driver 5] RDATA %p", mem), UVM_NONE);
+         // `uvm_info(get_type_name, $sformatf( "[Slave Driver 5] RDATA %p", mem), UVM_NONE);
         end
 
         else if(!`DRIVE_IF_S.HWRITE) begin
           `DRIVE_IF_S.HRDATA <= mem[`DRIVE_IF_S.HADDR];
         end
 
-        `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Address = %0h, write = %0b", `DRIVE_IF_S.HADDR,  `DRIVE_IF_S.HWRITE), UVM_NONE);
-        `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] RDATA %p", mem), UVM_NONE);
+       // `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Address = %0h, write = %0b", `DRIVE_IF_S.HADDR,  `DRIVE_IF_S.HWRITE), UVM_NONE);
+       //`uvm_info(get_type_name, $sformatf( "[Slave Driver 0] RDATA = %0h", `DRIVE_IF_S.HRDATA), UVM_NONE);
+       // `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] RDATA %p", mem), UVM_NONE);
       end
     end
   endtask

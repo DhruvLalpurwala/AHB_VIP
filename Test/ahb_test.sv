@@ -30,5 +30,5 @@ class ahb_test extends uvm_test;
 
     phase.drop_objection(this);
   endtask
-  
+
 endclass

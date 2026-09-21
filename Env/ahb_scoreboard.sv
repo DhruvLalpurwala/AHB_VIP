@@ -74,16 +74,16 @@ class ahb_scoreboard extends uvm_scoreboard;
     end
   endtask
   
-  function void report_phase(uvm_phase phase);
-    super.report_phase(phase);
-    `uvm_info(get_type_name(), $sformatf("Total Matches: %0d", match_count), UVM_LOW)
-    `uvm_info(get_type_name(), $sformatf("Total Mismatches: %0d", mismatch_count), UVM_LOW)
-    
-    if (mismatch_count > 0) begin
-      `uvm_error(get_type_name(), "Protocol verification FAILED with mismatches!")
-    end else begin
-      `uvm_info(get_type_name(), "Protocol verification PASSED!", UVM_LOW)
-    end
-  endfunction
+  //function void report_phase(uvm_phase phase);
+  //  super.report_phase(phase);
+  //  `uvm_info(get_type_name(), $sformatf("Total Matches: %0d", match_count), UVM_LOW)
+  //  `uvm_info(get_type_name(), $sformatf("Total Mismatches: %0d", mismatch_count), UVM_LOW)
+  //  
+  //  if (mismatch_count > 0) begin
+  //    `uvm_error(get_type_name(), "Protocol verification FAILED with mismatches!")
+  //  end else begin
+  //    `uvm_info(get_type_name(), "Protocol verification PASSED!", UVM_LOW)
+  //  end
+  //endfunction
 
 endclass

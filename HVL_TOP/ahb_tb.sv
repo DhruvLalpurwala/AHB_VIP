@@ -1,7 +1,6 @@
 import ahb_pkg::*;
-
-`include "ahb_interface.sv"
-`include "ahb_test.sv"
+import uvm_pkg::*;
+`include "../Interface/ahb_if.sv"
 
 module tb;
   
@@ -11,11 +10,12 @@ module tb;
   always #5 HCLK = ~HCLK;
   
   initial begin
-    HRESETn = 1;
-    #3 HRESETn = 0;
+    //HRESETn = 1;
+    //#3 
+	HRESETn = 0;
     #20 HRESETn =1;
-    #20 HRESETn = 0;
-    #5 HRESETn = 1;
+    //#20 HRESETn = 0;
+    //#5 HRESETn = 1;
   end
   
   ahb_if vif(HCLK, HRESETn);
