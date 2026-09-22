@@ -102,13 +102,15 @@ class ahb_single_burst extends ahb_m_sequence;
     endtask
 endclass
 
-                                                          ////////INCR Burst////////////////////
+                                                          ////////Wr -> Rd Burst////////////////////
 
-class ahb_incr_burst extends ahb_m_sequence;
+class ahb_burst_wr_rd extends ahb_m_sequence;
     ahb_seq_item req;
-    `uvm_object_utils(ahb_incr_burst)
+    `uvm_object_utils(ahb_burst_wr_rd)
 
-    function new(string name = "ahb_incr_burst");
+    bit [31:0] ADDR_L;
+
+    function new(string name = "ahb_burst_wr_rd");
       super.new(name);
     endfunction
  
@@ -121,13 +123,44 @@ class ahb_incr_burst extends ahb_m_sequence;
         	assert(req.randomize with {HWRITE == 1'b1;
       			   	   	   HBURST == 2;
 					   HSIZE == BIT_32;});
+	ADDR_L = req.HADDR;
 	req.print();
-      finish_item(req); 
+      finish_item(req);
+      
+
+      req = ahb_seq_item::type_id::create("req");
+      start_item(req);
+        	assert(req.randomize with {HWRITE == 1'b0; HADDR == ADDR_L;
+      			   	   	   HBURST == 2;
+					   HSIZE == BIT_32;});
+	req.print();
+      finish_item(req);
       //end
     endtask
 endclass
 
-                                                      //////Transfer Type////////////////
+                                                      //////////BURST////////////
+
+class ahb_incr_burst extends ahb_m_sequence;
+    ahb_seq_item req;
+    `uvm_object_utils(ahb_incr_burst)
+
+    function new(string name = "ahb_incr_burst");
+      super.new(name);
+    endfunction
+ 
+    task body();
+      `uvm_info(get_type_name, "inside body", UVM_LOW);
+      req = ahb_seq_item::type_id::create("req");
+      start_item(req);
+        	assert(req.randomize with {HWRITE == 1'b1;
+      			   	   	   HBURST == 2;
+					   HSIZE == BIT_32;});
+	req.print();
+      finish_item(req);
+         endtask
+endclass
+
 
 //class ahb_incr_burst extends ahb_m_sequence;
 //  ahb_seq_item req;

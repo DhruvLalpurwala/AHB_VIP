@@ -14,7 +14,6 @@ class ahb_seq_item extends uvm_sequence_item;
   rand bit [3:0] HWSTRB;      ////(DATA_WIDTH/8)-1:0
   rand int burst_length;
 
-  
   bit [31:0] HRDATA;
   bit HREADYOUT;
   bit HRESP;
@@ -29,13 +28,13 @@ class ahb_seq_item extends uvm_sequence_item;
     super.do_print(printer);
     printer.print_field_int("HADDR", HADDR, $bits(HADDR), UVM_HEX);
     printer.print_field_int("HWRITE", HWRITE, $bits(HWRITE), UVM_HEX);
-    printer.print_field_int("HBURST", HWRITE, $bits(HBURST), UVM_HEX);
-    printer.print_field_int("HTRANS", HWRITE, $bits(HTRANS), UVM_HEX);
+    printer.print_field_int("HBURST", HBURST, $bits(HBURST), UVM_HEX);
+    printer.print_field_int("HTRANS", HTRANS, $bits(HTRANS), UVM_HEX);
 
-    printer.print_field_int("HSIZE", HWRITE, $bits(HSIZE), UVM_HEX);
-    printer.print_field_int("burst_length", HWRITE, $bits(burst_length), UVM_HEX);
-    printer.print_field_int("HRDATA", HWRITE, $bits(HRDATA), UVM_HEX);
-    printer.print_field_int("HREADYOUT", HWRITE, $bits(HREADYOUT), UVM_HEX);
+    printer.print_field_int("HSIZE", HSIZE, $bits(HSIZE), UVM_HEX);
+    printer.print_field_int("burst_length", burst_length, $bits(burst_length), UVM_HEX);
+    printer.print_field_int("HRDATA", HRDATA, $bits(HRDATA), UVM_HEX);
+//    printer.print_field_int("HREADYOUT", HREADYOUT, $bits(HREADYOUT), UVM_HEX);
 
     foreach (HWDATA[i]) begin
       printer.print_field_int(
@@ -73,13 +72,13 @@ class ahb_seq_item extends uvm_sequence_item;
 
   constraint size_datawidth {HSIZE inside {BIT_8, BIT_16, BIT_32};}
   
-//   constraint size {HSIZE == BIT_8 -> HADDR[0] == 0;
-//                    HSIZE == BIT_16 -> HADDR[1:0] == 2'b0;
-//                    HSIZE == BIT_32 -> HADDR[2:0] == 3'b0;
-//                    HSIZE == BIT_64 -> HADDR[3:0] == 4'b0;
-//                    HSIZE == BIT_128 -> HADDR[4:0] == 5'b0;
-//                    HSIZE == BIT_256 -> HADDR[5:0] == 6'b0;
-//                    HSIZE == BIT_512 -> HADDR[6:0] == 7'b0;}
+   constraint size_aligned_add_boundary {HSIZE == BIT_16 -> HADDR[0] == 0;
+                    			 HSIZE == BIT_32 -> HADDR[1:0] == 2'b0;
+                   			 HSIZE == BIT_64 -> HADDR[2:0] == 3'b0;
+                   			 HSIZE == BIT_128 -> HADDR[3:0] == 4'b0;
+                   			 HSIZE == BIT_256 -> HADDR[4:0] == 5'b0;
+                   			 HSIZE == BIT_512 -> HADDR[5:0] == 6'b0;
+                   			 HSIZE == BIT_1024 -> HADDR[6:0] == 7'b0;}
   
   //constraint burst{HBURST inside {SINGLE, INCR, INCR4, INCR8, INCR16};}
   

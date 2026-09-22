@@ -10,8 +10,8 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
   bit [31:0] current_addr;
   int i;
 
-  int wrap_boundary;
-  int upper_boundary;
+  bit [31:0] wrap_boundary;
+  bit [31:0] upper_boundary;
   
   function new(string name = "ahb_m_driver", uvm_component parent = null);
     super.new(name,parent);
@@ -56,6 +56,7 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
 		`DRIVE_IF_M.HWRITE <= req.HWRITE;
 	        `DRIVE_IF_M.HADDR <= req.HADDR;
 		`DRIVE_IF_M.HSIZE <= req.HSIZE;
+		`DRIVE_IF_M.burst_length <= req.burst_length;
 		->done;
 	end
 	else if (req.HBURST == INCR || req.HBURST == INCR4 || req.HBURST == INCR8 || req.HBURST == INCR16) begin
@@ -68,6 +69,7 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
 		   `DRIVE_IF_M.HSIZE <= req.HSIZE;
 		   `DRIVE_IF_M.HADDR <= current_addr;
 		   `DRIVE_IF_M.HWRITE <= req.HWRITE;
+		   `DRIVE_IF_M.burst_length <= req.burst_length;
 		   `uvm_info(get_type_name, $sformatf("[Master Driver 1] Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
 		   
 		   current_addr = current_addr + (1 << req.HSIZE);
@@ -77,7 +79,9 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
 	else if (req.HBURST == WRAP4 || req.HBURST == WRAP8 || req.HBURST == 16) begin
 
 		wrap_boundary = (current_addr/((1 << req.HSIZE)*req.burst_length))*((1 << req.HSIZE)*req.burst_length);
+		`uvm_info(get_type_name, $sformatf("[Master Driver 0] Wrap Boundary = %0h, Address = %0h", wrap_boundary, current_addr), UVM_NONE);
 		upper_boundary = wrap_boundary + ((1 << req.HSIZE)*req.burst_length);
+		`uvm_info(get_type_name, $sformatf("[Master Driver 1] upper boundary = %0h", upper_boundary), UVM_NONE);
 
 		for(i=0; i < req.burst_length; i++) begin
 		@(posedge vif.HCLK);
@@ -87,9 +91,12 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
 		   `DRIVE_IF_M.HSIZE <= req.HSIZE;
 		   `DRIVE_IF_M.HADDR <= current_addr; 
 		   `DRIVE_IF_M.HWRITE <= req.HWRITE;
-		   
+		   `DRIVE_IF_M.burst_length <= req.burst_length;
+
+		   `uvm_info(get_type_name, $sformatf("[Master Driver 1] Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
+
 		   current_addr = current_addr + (1 << req.HSIZE);
-		   if (current_addr == upper_boundary) begin
+		   if (current_addr >= upper_boundary) begin
 			current_addr = wrap_boundary;
 		   end
 
@@ -110,10 +117,11 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
          @(posedge vif.HCLK);
          if(vif.HWRITE)begin
 	  `DRIVE_IF_M.HWDATA <= data_q.pop_front();
+	  `uvm_info("QUEUE_PRINT", $sformatf("Queue contents: %p", data_q), UVM_LOW)
          end
         end
 
-        //`uvm_info(get_type_name, $sformatf("[Master Driver 1] Data = %0h, Address = %0h , write = %0b",req.HWDATA, req.HADDR, req.HWRITE), UVM_NONE);
+       // `uvm_info(get_type_name, $sformatf("[Master Driver 1] Data = %0h, Address = %0h , write = %0b",req.HWDATA, req.HADDR, req.HWRITE), UVM_NONE);
       end
   endtask
   

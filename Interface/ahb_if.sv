@@ -6,7 +6,7 @@ interface ahb_if (input logic HCLK, HRESETn);
   logic [2:0] HBURST;
   logic [2:0] HSIZE;
   logic [1:0] HTRANS;
-  //logic burst_length;
+  logic [31:0] burst_length;
   
   logic [31:0] HRDATA;
   logic HREADYOUT;
@@ -20,6 +20,7 @@ interface ahb_if (input logic HCLK, HRESETn);
     output HBURST;
     output HSIZE;
     output HTRANS;
+    output burst_length;
     input HRDATA;
     input HREADYOUT;
     input HRESP;
@@ -36,6 +37,7 @@ interface ahb_if (input logic HCLK, HRESETn);
     input HBURST;
     input HSIZE;
     input HTRANS;
+    input burst_length;
   endclocking
   
   clocking ahb_m_monitor_cb @(posedge HCLK);
