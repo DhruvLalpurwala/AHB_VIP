@@ -2,23 +2,25 @@ typedef enum bit [2:0] {SINGLE, INCR, WRAP4, INCR4, WRAP8, INCR8, WRAP16, INCR16
 typedef enum bit [2:0] {BIT_8, BIT_16, BIT_32, BIT_64, BIT_128, BIT_256, BIT_512, BIT_1024} transfer_size;
 typedef enum bit [1:0] {IDLE, BUSY, NONSEQ, SEQ} transfer_type;
 
-class ahb_seq_item extends uvm_sequence_item;
+class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sequence_item;
   
   ////random items
-  rand bit [31:0] HADDR;      ////ADDRESS_WIDTH-1:0
-  rand bit [31:0] HWDATA[];     ////DATA_WIDTH-1:0
+  rand bit [(ADDR_WIDTH-1):0] HADDR;      ////ADDRESS_WIDTH-1:0
+  rand bit [(DATA_WIDTH-1):0] HWDATA[];     ////DATA_WIDTH-1:0
   rand bit HWRITE;
   rand burst_operation HBURST;
   rand transfer_size HSIZE;
   rand transfer_type HTRANS;
-  rand bit [3:0] HWSTRB;      ////(DATA_WIDTH/8)-1:0
+  rand bit [(DATA_WIDTH/8)-1:0] HWSTRB;      ////(DATA_WIDTH/8)-1:0
   rand int burst_length;
 
-  bit [31:0] HRDATA;
+  rand bit [3:0] number_of_wait_states;
+
+  bit [DATA_WIDTH-1:0] HRDATA;
   bit HREADYOUT;
   bit HRESP;
     
-  `uvm_object_utils(ahb_seq_item)
+  `uvm_object_param_utils(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH))
   
   function new(string name = "ahb_seq_item");
     super.new(name);
@@ -63,10 +65,9 @@ class ahb_seq_item extends uvm_sequence_item;
 //                   HSIZE == BIT_16 -> HWSTRB == 4'h1;
 //                   HSIZE == BIT_32 -> HWSTRB == 4'h2;
 //                  }
-
 //   constraint transfer_type {HTRANS dist {IDLE:=10, BUSY:=10, NONSEQ:=20, SEQ:=60};
                            
-  constraint address {HADDR inside {[10:50]};}
+  constraint address {HADDR inside {[0:1023]};}
 
   constraint data_size {HWDATA.size() inside {[1:64]};}
 

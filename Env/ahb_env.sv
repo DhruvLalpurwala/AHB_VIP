@@ -1,8 +1,8 @@
-class ahb_env extends uvm_env;
-  `uvm_component_utils(ahb_env)
+class ahb_env #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_env;
+  `uvm_component_utils(ahb_env #(ADDR_WIDTH, DATA_WIDTH))
   
-  ahb_m_agent m_agnt;
-  ahb_s_agent s_agnt;
+  ahb_m_agent #(ADDR_WIDTH, DATA_WIDTH) m_agnt;
+  ahb_s_agent #(ADDR_WIDTH, DATA_WIDTH) s_agnt;
   //ahb_scoreboard scob;
   
   function new(string name = "ahb_env", uvm_component parent = null);
@@ -11,8 +11,8 @@ class ahb_env extends uvm_env;
   
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    m_agnt = ahb_m_agent::type_id::create("m_agnt",this);
-    s_agnt = ahb_s_agent::type_id::create("s_agnt",this);
+    m_agnt = ahb_m_agent #(ADDR_WIDTH, DATA_WIDTH)::type_id::create("m_agnt",this);
+    s_agnt = ahb_s_agent #(ADDR_WIDTH, DATA_WIDTH)::type_id::create("s_agnt",this);
     //scob = ahb_scoreboard::type_id::create("scob", this);
   endfunction
   

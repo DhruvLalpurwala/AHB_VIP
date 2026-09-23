@@ -1,17 +1,17 @@
 `define DRIVE_IF_M vif/*.AHB_M_DRIVER.ahb_m_driver_cb*/
 
-class ahb_m_driver extends uvm_driver#(ahb_seq_item);
-  `uvm_component_utils(ahb_m_driver)
+class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_driver#(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH));
+  `uvm_component_utils(ahb_m_driver #(ADDR_WIDTH, DATA_WIDTH))
   
   virtual ahb_if vif;
   event done;
   
-  bit [31:0] data_q [$];
-  bit [31:0] current_addr;
+  bit [DATA_WIDTH-1:0] data_q [$];
+  bit [ADDR_WIDTH-1:0] current_addr;
   int i;
 
-  bit [31:0] wrap_boundary;
-  bit [31:0] upper_boundary;
+  bit [ADDR_WIDTH-1:0] wrap_boundary;
+  bit [ADDR_WIDTH-1:0] upper_boundary;
   
   function new(string name = "ahb_m_driver", uvm_component parent = null);
     super.new(name,parent);
@@ -41,9 +41,11 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
   task address_phase(); 
     forever begin
       seq_item_port.get(req);
-	data_q = req.HWDATA;
-	current_addr = req.HADDR;
-	
+      data_q = req.HWDATA;
+      current_addr = req.HADDR;
+      
+
+
       if(!vif.HRESETn) begin
         `DRIVE_IF_M.HWRITE <= 0;
         `DRIVE_IF_M.HADDR <= 0;
@@ -82,8 +84,9 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
 		`uvm_info(get_type_name, $sformatf("[Master Driver 0] Wrap Boundary = %0h, Address = %0h", wrap_boundary, current_addr), UVM_NONE);
 		upper_boundary = wrap_boundary + ((1 << req.HSIZE)*req.burst_length);
 		`uvm_info(get_type_name, $sformatf("[Master Driver 1] upper boundary = %0h", upper_boundary), UVM_NONE);
-
-		for(i=0; i < req.burst_length; i++) begin
+		
+		for(i=0; i < req.burst_length; i++) begin 
+wait(`DRIVE_IF_M.HREADYOUT == 1);
 		@(posedge vif.HCLK);
 		`uvm_info(get_type_name, $sformatf("I = %0d", i), UVM_LOW);
 		   `DRIVE_IF_M.HTRANS <= (i == 0)? NONSEQ : SEQ;
@@ -109,7 +112,8 @@ class ahb_m_driver extends uvm_driver#(ahb_seq_item);
   
   task data_phase();
       forever begin
-        wait(done.triggered);
+        wait(done.triggered);      
+	wait(`DRIVE_IF_M.HREADYOUT == 1);
         if(!vif.HRESETn) begin
          `DRIVE_IF_M.HWDATA <= 0; 
         end

@@ -1,7 +1,7 @@
 class ahb_test extends uvm_test;
   `uvm_component_utils(ahb_test)
   
-  ahb_env e;
+  ahb_env #(32, 32) e;
   ahb_m_sequence seq;
   ahb_s_sequence seq1;
   
@@ -11,7 +11,7 @@ class ahb_test extends uvm_test;
   
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    e = ahb_env::type_id::create("e",this);
+    e = ahb_env #(32, 32)::type_id::create("e",this);
   endfunction
   
   task run_phase(uvm_phase phase);

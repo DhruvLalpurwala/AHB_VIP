@@ -1,8 +1,8 @@
 // `uvm_analysis_imp_decl(_ahb_m_item_port)
 // `uvm_analysis_imp_decl(_ahb_s_item_port)
 
-class ahb_scoreboard extends uvm_scoreboard;
-  `uvm_component_utils(ahb_scoreboard)
+class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_scoreboard;
+  `uvm_component_utils(ahb_scoreboard #(ADDR_WIDTH, DATA_WIDTH))
   
   uvm_analysis_imp #(ahb_seq_item, ahb_scoreboard) m_actual_imp; 
 //   uvm_analysis_imp_ahb_m_item_port #(ahb_seq_item, ahb_scoreboard) m_actual_imp;  
@@ -11,7 +11,7 @@ class ahb_scoreboard extends uvm_scoreboard;
   ahb_seq_item req_q[$];
   
 //   Reference memory
-  bit [31:0] sco_mem [logic[31:0]];
+  bit [DATA_WIDTH-1:0] sco_mem [2**10];
   
   int match_count, mismatch_count;
   
