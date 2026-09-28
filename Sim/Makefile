@@ -9,12 +9,12 @@ ifneq ($(child),)
 endif
  
 INC = \
-+incdir+../HVL_TOP \
-+incdir+../Package 
++incdir+../Common/HVL_TOP \
++incdir+../Common/Package 
 
 SRC = \
-../Package/ahb_pkg.sv \
-../HVL_TOP/ahb_tb.sv
+../Common/Package/ahb_pkg.sv \
+../Common/HVL_TOP/ahb_tb.sv
  
 TB_TOP= tb
 T_name= ahb_test
