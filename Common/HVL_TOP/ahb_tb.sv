@@ -1,0 +1,32 @@
+import ahb_pkg::*;
+import uvm_pkg::*;
+`include "../Interface/ahb_if.sv"
+
+module tb;
+  
+  bit HCLK;
+  bit HRESETn;
+  
+  always #5 HCLK = ~HCLK;
+  
+  initial begin
+    //HRESETn = 1;
+    //#3 
+	HRESETn = 0;
+    #20 HRESETn =1;
+    //#20 HRESETn = 0;
+    //#5 HRESETn = 1;
+  end
+  
+  ahb_if vif(HCLK, HRESETn);
+  
+  initial begin
+    uvm_config_db#(virtual ahb_if)::set(null, "*", "vif", vif);
+    $dumpfile("dump.vcd"); 
+    $dumpvars;
+  end
+  
+  initial begin
+    run_test("ahb_test");
+  end
+endmodule
