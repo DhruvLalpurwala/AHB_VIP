@@ -1,1 +1,0 @@
- -o /home/dhruv-lalpurwala/AT_WORK/Sim/compile -lc /home/dhruv-lalpurwala/AT_WORK/Sim/library.cfg -fl /home/dhruv-lalpurwala/AT_WORK/Sim/library.cfg -pli /home/dhruv-lalpurwala/Aldec/Riviera-PRO-2025.10-x64/bin/libsystf.so -dbg -mfcu -uvmver 1800.2-2020 +incdir+../HVL_TOP +incdir+../Package ../Package/ahb_pkg.sv ../HVL_TOP/ahb_tb.sv
