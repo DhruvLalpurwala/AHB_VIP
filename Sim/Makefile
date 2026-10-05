@@ -2,7 +2,7 @@ seed ?= random
 CURRENT_TIME := $(shell date "+%H_%M")
 base := ahb_m_sequence
 child ?= 
-WAVE ?=
+WAVE ?= 0
 
 ifneq ($(child),)
     override += +uvm_set_type_override=$(base),$(child)
@@ -36,8 +36,8 @@ sim:comp
 	@echo "//===Simulation Starts===//"
 	vsimsa -l $(T_name)_$(seed)_$(CURRENT_TIME)_Sim.log -do "\
 		vsim -sv_seed $(seed) +access+r $(override) work.$(TB_TOP);\
-		if{$(WAVE) == 1}{\
-		vcd add wave -r sim:/$(TB_TOP)/*;}; run -all;\
+		if {$(WAVE)==1} {vcd add wave -r sim:/$(TB_TOP)/*};\
+		run -all;\
 		quit;\
 	" 
 	@echo "//===Simulation Ended===//"

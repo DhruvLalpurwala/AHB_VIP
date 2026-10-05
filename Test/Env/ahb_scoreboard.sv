@@ -4,11 +4,11 @@
 class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_scoreboard;
   `uvm_component_utils(ahb_scoreboard #(ADDR_WIDTH, DATA_WIDTH))
   
-  uvm_analysis_imp #(ahb_seq_item, ahb_scoreboard) m_actual_imp; 
+  uvm_analysis_imp #(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH), ahb_scoreboard #(ADDR_WIDTH, DATA_WIDTH)) m_actual_imp; 
 //   uvm_analysis_imp_ahb_m_item_port #(ahb_seq_item, ahb_scoreboard) m_actual_imp;  
 //   uvm_analysis_imp_ahb_s_item_port #(ahb_seq_item, ahb_scoreboard) s_expected_imp;
   
-  ahb_seq_item req_q[$];
+  ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) req_q[$];
   
 //   Reference memory
   bit [DATA_WIDTH-1:0] sco_mem [bit [ADDR_WIDTH-1:0]];
@@ -35,14 +35,14 @@ class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sco
     
 //   endfunction
   
-  virtual function void write(ahb_seq_item tx);
+  virtual function void write(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) tx);
     /////get seq_item from monitor
     req_q.push_back(tx);
   endfunction
   
   virtual task run_phase(uvm_phase phase);
     forever begin
-     ahb_seq_item ahb_req;
+     ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) ahb_req;
     `uvm_info(get_type_name(),$sformatf("RUN_PHASE started size : %0d",req_q.size()),UVM_LOW)
     /////Compare 
     
@@ -51,9 +51,9 @@ class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sco
     ahb_req = req_q.pop_front();
     
     if(ahb_req.HWRITE) begin
-      sco_mem[ahb_req.HADDR] = ahb_req.HWDATA;
+      sco_mem[ahb_req.HADDR] = ahb_req.HWDATA[0];
       `uvm_info(get_type_name(),$sformatf(" WRITE DATA"),UVM_LOW)
-      `uvm_info(get_type_name(),$sformatf("Addr: %0h and Data: %0h",ahb_req.HADDR, ahb_req.HWDATA),UVM_LOW) 
+      `uvm_info(get_type_name(),$sformatf("Addr: %0h and Data: %0p",ahb_req.HADDR, ahb_req.HWDATA),UVM_LOW) 
     end
     else if(!ahb_req.HWRITE) begin
       if(sco_mem[ahb_req.HADDR] == ahb_req.HRDATA) begin
@@ -72,16 +72,16 @@ class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sco
     end
   endtask
   
-  //function void report_phase(uvm_phase phase);
-  //  super.report_phase(phase);
-  //  `uvm_info(get_type_name(), $sformatf("Total Matches: %0d", match_count), UVM_LOW)
-  //  `uvm_info(get_type_name(), $sformatf("Total Mismatches: %0d", mismatch_count), UVM_LOW)
-  //  
-  //  if (mismatch_count > 0) begin
-  //    `uvm_error(get_type_name(), "Protocol verification FAILED with mismatches!")
-  //  end else begin
-  //    `uvm_info(get_type_name(), "Protocol verification PASSED!", UVM_LOW)
-  //  end
-  //endfunction
+  function void report_phase(uvm_phase phase);
+    super.report_phase(phase);
+    `uvm_info(get_type_name(), $sformatf("Total Matches: %0d", match_count), UVM_LOW)
+    `uvm_info(get_type_name(), $sformatf("Total Mismatches: %0d", mismatch_count), UVM_LOW)
+    
+    if (mismatch_count > 0) begin
+      `uvm_error(get_type_name(), "Protocol verification FAILED with mismatches!")
+    end else begin
+      `uvm_info(get_type_name(), "Protocol verification PASSED!", UVM_LOW)
+    end
+  endfunction
 
 endclass

@@ -7,7 +7,7 @@ class ahb_s_sequence extends uvm_sequence#(ahb_seq_item #(32, 32));
   endfunction
   
   task body();
-    //repeat(2) begin
+    repeat(2) begin
     req = ahb_seq_item #(32, 32)::type_id::create("req");
     start_item(req);
     assert(req.randomize());
@@ -15,7 +15,7 @@ class ahb_s_sequence extends uvm_sequence#(ahb_seq_item #(32, 32));
 //       req.print();
     finish_item(req);
 
-    //end
+    end
   endtask
   
 endclass

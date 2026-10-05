@@ -13,7 +13,7 @@ class ahb_m_sequence extends uvm_sequence#(ahb_seq_item #(32, 32));
  
     task body();
       `uvm_info(get_type_name, "inside body", UVM_LOW);
-      for (int i = 0; i<8; i++) begin
+      for (int i = 0; i<4; i++) begin
        // `uvm_info(get_type_name, $sformatf("inside body I = %0d", i), UVM_LOW);
       req = ahb_seq_item #(32, 32)::type_id::create("req");
       start_item(req);
@@ -158,6 +158,39 @@ class ahb_incr_burst  extends ahb_m_sequence ;
 					   HSIZE == BIT_32;});
 	req.print();
       finish_item(req);
+         endtask
+endclass
+
+                                                       ////////Wr->Rd
+
+class ahb_wr_rd  extends ahb_m_sequence ;
+    //ahb_seq_item #(32, 32) req;
+    `uvm_object_utils(ahb_wr_rd)
+
+    bit[31:0] ADDR_L;
+
+    function new(string name = "ahb_wr_rd");
+      super.new(name);
+    endfunction
+ 
+    task body();
+      `uvm_info(get_type_name, "inside body", UVM_LOW);
+      req = ahb_seq_item #(32, 32)::type_id::create("req");
+      start_item(req);
+        	assert(req.randomize with {HWRITE == 1'b1;
+      			   	   	   HBURST == 0;
+					   HSIZE == BIT_32;});
+        ADDR_L = req.HADDR;
+	req.print();
+      finish_item(req);
+
+      start_item(req);
+        	assert(req.randomize with {HWRITE == 1'b0; HADDR == ADDR_L;
+      			   	   	   HBURST == 0;
+					   HSIZE == BIT_32;});
+	req.print();
+      finish_item(req);
+
          endtask
 endclass
 

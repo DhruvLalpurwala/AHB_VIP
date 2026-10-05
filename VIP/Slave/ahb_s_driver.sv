@@ -1,4 +1,5 @@
-`define DRIVE_IF_S vif/*.AHB_S_DRIVER.ahb_s_driver_cb*/
+`define DRIVE_IF_S vif.AHB_S_DRIVER.ahb_s_driver_cb
+`define DRIVE_IF_S_DATA vif.AHB_S_DRIVER.ahb_s_drv_neg_cb
 
 class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_driver#(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH));
   `uvm_component_utils(ahb_s_driver #(ADDR_WIDTH, DATA_WIDTH))
@@ -19,12 +20,15 @@ class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
     ///Get the interface
     if(!uvm_config_db#(virtual ahb_if)::get(this, "*", "vif", vif))
       `uvm_fatal("NO_VIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
+	mem[0] = 32'h12345678;
+        `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] RDATA %h", mem[0]), UVM_NONE);
   endfunction
   
   task run_phase(uvm_phase phase);    
     init();
     wait_for_reset();
-    @(posedge vif.HCLK);
+    //@(posedge vif.HCLK);
+    @(vif.AHB_S_DRIVER.ahb_s_driver_cb);
     drive();
     
   endtask
@@ -37,33 +41,42 @@ class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
         `DRIVE_IF_M.HRDATA <= 0; 
       end
 
-      else begin     
-      `DRIVE_IF_S.HREADYOUT <= 1'b1;
-      @(posedge vif.HCLK);
-      `DRIVE_IF_S.HREADYOUT <= 1'b0;
-      @(posedge vif.HCLK);
-      @(posedge vif.HCLK);
-      `DRIVE_IF_S.HREADYOUT <= 1'b1;
+      else begin
+
+	 `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Inside Slave else"), UVM_NONE);
+	 `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Burst length = %0d", vif.burst_length), UVM_NONE);
+
 	for (i = 0; i < vif.burst_length; i++) begin
-	 `uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Address = %0h, write = %0b", vif.HADDR,  vif.HWRITE), UVM_NONE);
-       	 @(posedge vif.HCLK);
+	 //`uvm_info(get_type_name, $sformatf( "[Slave Driver 0] Address = %0h, write = %0b", `DRIVE_IF_S.HADDR,  `DRIVE_IF_S.HWRITE), UVM_NONE);
+	`DRIVE_IF_S.HREADYOUT <= 1'b1;
+       	 //@(posedge vif.HCLK);
+	 @(vif.AHB_S_DRIVER.ahb_s_driver_cb);
 	 addr_q.push_back(`DRIVE_IF_S.HADDR);
-	 `uvm_info(get_type_name, $sformatf( "[Slave Driver +edge] Address = %0h, write = %0b", vif.HADDR,  vif.HWRITE), UVM_NONE);
+	 `uvm_info(get_type_name, $sformatf( "[Slave Driver +edge] Address = %0h, write = %0b", `DRIVE_IF_S.HADDR,  `DRIVE_IF_S.HWRITE), UVM_NONE);
+//        `DRIVE_IF_S.HREADYOUT <= 1'b0;
+//        // @(posedge vif.HCLK);
+//	@(vif.AHB_S_DRIVER.ahb_s_driver_cb);
+//	`DRIVE_IF_S.HREADYOUT <= 1'b1;
 
        	 if( `DRIVE_IF_S.HWRITE) begin
-       	   @(negedge vif.HCLK); 
-       	   `uvm_info(get_type_name, $sformatf( "[Slave Driver -edge] Address = %0h, write = %0b, wdata = %0h", `DRIVE_IF_S.HADDR, `DRIVE_IF_S.HWRITE, vif.HWDATA), UVM_NONE);
+       	   //@(negedge vif.HCLK); 
+	   @(vif.AHB_S_DRIVER.ahb_s_drv_neg_cb);
+       	   `uvm_info(get_type_name, $sformatf( "[Slave Driver -edge] Address = %0h, write = %0b, wdata = %0h", `DRIVE_IF_S.HADDR, `DRIVE_IF_S.HWRITE, `DRIVE_IF_S_DATA.HWDATA), UVM_NONE);
        	   current_addr = addr_q.pop_front();
-	   mem[current_addr] =  vif.HWDATA;
-       	   `uvm_info(get_type_name, $sformatf( "[Slave Driver Mem] mem[%0h] = %0h", current_addr, vif.HWDATA), UVM_NONE);
+	   mem[current_addr] =  `DRIVE_IF_S_DATA.HWDATA;
+       	   `uvm_info(get_type_name, $sformatf( "[Slave Driver Mem] mem[%0h] = %0h", current_addr, `DRIVE_IF_S_DATA.HWDATA), UVM_NONE);
        	 end
 
        	 else if(!`DRIVE_IF_S.HWRITE) begin
 	   current_addr = addr_q.pop_front();
-       	   `DRIVE_IF_S.HRDATA = mem[current_addr];
+       	   `DRIVE_IF_S.HRDATA <= mem[current_addr];
 	   `uvm_info(get_type_name, $sformatf( "[Slave Driver Mem1] mem[%0h] = %0h", current_addr, vif.HRDATA), UVM_NONE);
        	 end
+	//`DRIVE_IF_S.HREADYOUT <= 1'b1;
 	end
+
+
+
 //	repeat (req.number_of_wait_states) begin
 //	   `DRIVE_IF_S.HREADYOUT <= 1'b0;
 //	   @(posedge vif.HCLK);

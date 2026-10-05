@@ -12,7 +12,7 @@ module tb;
   initial begin
     //HRESETn = 1;
     //#3 
-	HRESETn = 0;
+    HRESETn = 0;
     #20 HRESETn =1;
     //#20 HRESETn = 0;
     //#5 HRESETn = 1;
