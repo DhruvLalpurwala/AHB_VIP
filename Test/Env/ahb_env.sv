@@ -19,8 +19,8 @@ class ahb_env #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_env;
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     /////Connect monitor and scoreboard
-    m_agnt.m_mon.ahb_m_item_port.connect(scob.m_actual_imp);
-//     s_agnt.s_mon.ahb_s_item_port.connect(scob.s_expected_imp);
+    m_agnt.m_mon.ahb_m_item_port.connect(scob.m_imp);
+    s_agnt.s_mon.ahb_s_item_port.connect(scob.s_imp);
   endfunction
   
 endclass

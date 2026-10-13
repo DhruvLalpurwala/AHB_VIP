@@ -13,6 +13,7 @@ typedef virtual ahb_if vif;
 `include "../../Sequence/ahb_s_sequence.sv"
 `include "../../VIP/Slave/ahb_s_sequencer.sv"
 `include "../../VIP/Slave/ahb_s_driver.sv"
+`include "../../VIP/Slave/ahb_s_monitor.sv"
 `include "../../VIP/Slave/ahb_s_agent.sv"
 `include "../../Test/Env/ahb_scoreboard.sv"
 `include "../../Test/Env/ahb_env.sv"

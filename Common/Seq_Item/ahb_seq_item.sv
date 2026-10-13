@@ -6,7 +6,7 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
   
   ////random items
   rand bit [(ADDR_WIDTH-1):0] HADDR;      ////ADDRESS_WIDTH-1:0
-  rand bit [(DATA_WIDTH-1):0] HWDATA[];     ////DATA_WIDTH-1:0
+  rand bit [(DATA_WIDTH-1):0] HWDATA[$];     ////DATA_WIDTH-1:0
   rand bit HWRITE;
   rand burst_operation HBURST;
   rand transfer_size HSIZE;
@@ -67,19 +67,19 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
 //                  }
 //   constraint transfer_type {HTRANS dist {IDLE:=10, BUSY:=10, NONSEQ:=20, SEQ:=60};
                            
-  constraint address {HADDR inside {[0:1023]};}
+//  constraint address {HADDR inside {[0:1023]};}
 
   constraint data_size {HWDATA.size() inside {[1:64]};}
 
   constraint size_datawidth {HSIZE inside {BIT_8, BIT_16, BIT_32};}
   
-   constraint size_aligned_add_boundary {HSIZE == BIT_16 -> HADDR[0] == 0;
-                    			 HSIZE == BIT_32 -> HADDR[1:0] == 2'b0;
-                   			 HSIZE == BIT_64 -> HADDR[2:0] == 3'b0;
-                   			 HSIZE == BIT_128 -> HADDR[3:0] == 4'b0;
-                   			 HSIZE == BIT_256 -> HADDR[4:0] == 5'b0;
-                   			 HSIZE == BIT_512 -> HADDR[5:0] == 6'b0;
-                   			 HSIZE == BIT_1024 -> HADDR[6:0] == 7'b0;}
+  constraint size_aligned_add_boundary {HSIZE == BIT_16 -> HADDR[0] == 0;
+                    			HSIZE == BIT_32 -> HADDR[1:0] == 2'b0;
+                   			HSIZE == BIT_64 -> HADDR[2:0] == 3'b0;
+                   			HSIZE == BIT_128 -> HADDR[3:0] == 4'b0;
+                   			HSIZE == BIT_256 -> HADDR[4:0] == 5'b0;
+                   			HSIZE == BIT_512 -> HADDR[5:0] == 6'b0;
+                   			HSIZE == BIT_1024 -> HADDR[6:0] == 7'b0;}
   
   //constraint burst{HBURST inside {SINGLE, INCR, INCR4, INCR8, INCR16};}
   
@@ -88,5 +88,8 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
 			 (HBURST == INCR4) || (HBURST == WRAP4) -> {burst_length == 4; HWDATA.size() == 4;}
                          (HBURST == INCR8) || (HBURST == WRAP8) -> {burst_length == 8; HWDATA.size() == 8;}
                          (HBURST == INCR16) || (HBURST == WRAP16) -> {burst_length == 16; HWDATA.size() == 16;}}
+
+  
+  constraint ahb_1kb_boundary {HADDR[9:0] == ((HADDR + (burst_length * (1 << HSIZE)) - 1) / 1024);}
 
 endclass 

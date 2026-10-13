@@ -19,14 +19,15 @@ class ahb_test extends uvm_test;
     seq = ahb_m_sequence::type_id::create("seq");
     seq1 = ahb_s_sequence::type_id::create("seq1");
     
-    fork
+    //fork
       
         seq.start(e.m_agnt.m_seqr);
-        seq1.start(e.s_agnt.s_seqr);
+        //seq1.start(e.s_agnt.s_seqr);
      
-    join
+    //join
 //         seq.start(e.s_agnt.s_seqr);
-    #30;
+   #200; 
+    //phase.phase_done.set_drain_time(this, 1ns);
 
     phase.drop_objection(this);
   endtask
