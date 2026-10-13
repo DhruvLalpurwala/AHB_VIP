@@ -1,4 +1,4 @@
-`define DRIVE_IF_M vif.AHB_M_DRIVER.ahb_m_driver_cb
+`define DRIVE_IF_M vif.ahb_m_driver_cb
 
 class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_driver#(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH));
   `uvm_component_utils(ahb_m_driver #(ADDR_WIDTH, DATA_WIDTH))

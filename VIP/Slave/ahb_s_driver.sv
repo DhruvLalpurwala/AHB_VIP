@@ -1,4 +1,4 @@
-`define DRIVE_IF_S vif.AHB_S_DRIVER.ahb_s_driver_cb
+`define DRIVE_IF_S vif.ahb_s_driver_cb
 
 class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_driver#(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH));
   `uvm_component_utils(ahb_s_driver #(ADDR_WIDTH, DATA_WIDTH))
@@ -64,7 +64,7 @@ class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
       end
       else begin
         @(`DRIVE_IF_S);
-        if (`DRIVE_IF_S.HTRANS == NONSEQ || `DRIVE_IF_S.HTRANS == SEQ) begin
+        //if (`DRIVE_IF_S.HTRANS == NONSEQ || `DRIVE_IF_S.HTRANS == SEQ) begin
             if (`DRIVE_IF_S.HWRITE && addr_q.size() > 0) begin
                current_addr = addr_q.pop_front();
 	       mem[current_addr] =  `DRIVE_IF_S.HWDATA;
@@ -78,10 +78,10 @@ class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
        	       `DRIVE_IF_S.HRDATA <= mem[current_addr];
                `uvm_info(get_type_name, $sformatf( "[Slave Driver Mem1] mem[%0h] = %0h", current_addr, vif.HRDATA), UVM_NONE);
             end
-        end
-        else begin
-          `DRIVE_IF_S.HRESP <= 1'b0;
-        end
+        //end
+        //else begin
+          //`DRIVE_IF_S.HRESP <= 1'b0;
+        //end
       end
     end
   endtask

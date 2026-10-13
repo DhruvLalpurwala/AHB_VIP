@@ -1,4 +1,4 @@
-`define MON_IF_M vif.AHB_M_MONITOR.ahb_m_monitor_cb
+`define MON_IF_M vif.ahb_m_monitor_cb
 
 class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_monitor;
   `uvm_component_utils(ahb_m_monitor #(ADDR_WIDTH, DATA_WIDTH))
@@ -40,9 +40,10 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 	if (vif.HRESETn && `MON_IF_M.HREADYOUT && (`MON_IF_M.HTRANS == NONSEQ || `MON_IF_M.HTRANS == SEQ)) begin
           addr_item.HWRITE = `MON_IF_M.HWRITE;
           addr_item.HADDR = `MON_IF_M.HADDR;
-          addr_item.HTRANS = `MON_IF_M.HTRANS;
-          addr_item.HSIZE = `MON_IF_M.HSIZE;
-          addr_item.HBURST = `MON_IF_M.HBURST;
+          addr_item.HTRANS = transfer_type'(`MON_IF_M.HTRANS);
+          addr_item.HSIZE = transfer_size'(`MON_IF_M.HSIZE);
+          addr_item.HBURST = burst_operation'(`MON_IF_M.HBURST);
+          `uvm_info(get_type_name, $sformatf("[Master Mon] Address = %0h , write = %0b",`MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
  	  addr_q.push_back(addr_item);
           -> done;
         end
@@ -51,18 +52,21 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 
   task data_phase();
     ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_item;
-    wait (done.triggered);
+    //@done;
     forever begin
+        @done;
         @(`MON_IF_M);
         data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("data_item");
-        if (vif.HRESETn && `MON_IF_M.HREADYOUT && (`MON_IF_M.HTRANS == NONSEQ || `MON_IF_M.HTRANS == SEQ)) begin
-          if (`MON_IF_M.HWRITE) begin
+        if (vif.HRESETn && `MON_IF_M.HREADYOUT) begin
+          //if (addr_q.HWRITE == 1'b1) begin
              //d_queue.push_back(`MON_IF_M.HWDATA)
              data_item.HWDATA.push_back(`MON_IF_M.HWDATA);
-          end
-          else begin
+             `uvm_info(get_type_name, $sformatf("[Master Mon Write] WData = %0h", `MON_IF_M.HWDATA), UVM_NONE);
+          //end
+          //else begin
              data_item.HRDATA = `MON_IF_M.HRDATA;
-          end
+             `uvm_info(get_type_name, $sformatf("[Master Mon Read] RData = %0h", `MON_IF_M.HRDATA), UVM_NONE);
+          //end
 	  data_q.push_back(data_item);
         end
     end
@@ -71,20 +75,26 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   task monitor();
      forever begin
         ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) temp_data_item, temp_addr_item, mon_item;
-        wait (data_q.size() > 0);
+        wait (data_q.size() > 0 && addr_q.size() > 0);
           temp_data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_data_item");
           temp_addr_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_addr_item");
              temp_data_item = data_q.pop_front();
              temp_addr_item = addr_q.pop_front();
-             
+
           mon_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("mon_item");
              mon_item.HADDR = temp_addr_item.HADDR;
              mon_item.HWRITE = temp_addr_item.HWRITE;
              mon_item.HTRANS = temp_addr_item.HTRANS;
              mon_item.HSIZE = temp_addr_item.HSIZE;
              mon_item.HBURST = temp_addr_item.HBURST;
+          if(temp_addr_item.HWRITE) begin
              mon_item.HWDATA = temp_data_item.HWDATA;
+          end
+          else begin
              mon_item.HRDATA = temp_data_item.HRDATA;
+          end
+             `uvm_info(get_type_name, $sformatf("[Master Mon Sample] Addr = %0p, WData = %0p", temp_addr_item.HADDR, temp_data_item.HWDATA), UVM_NONE);
+             //mon_item.HRDATA = temp_data_item.HRDATA;
              ahb_m_item_port.write(mon_item);
              `uvm_info(get_type_name, "Write Done", UVM_NONE);
      end
