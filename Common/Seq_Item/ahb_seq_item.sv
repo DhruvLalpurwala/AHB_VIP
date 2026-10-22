@@ -36,7 +36,7 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
     printer.print_field_int("HSIZE", HSIZE, $bits(HSIZE), UVM_HEX);
     printer.print_field_int("burst_length", burst_length, $bits(burst_length), UVM_HEX);
     printer.print_field_int("HRDATA", HRDATA, $bits(HRDATA), UVM_HEX);
-//    printer.print_field_int("HREADYOUT", HREADYOUT, $bits(HREADYOUT), UVM_HEX);
+    printer.print_field_int("HREADYOUT", HREADYOUT, $bits(HREADYOUT), UVM_HEX);
 
     foreach (HWDATA[i]) begin
       printer.print_field_int(
@@ -60,15 +60,7 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
   endfunction
   
   ////Constraints
-  
-//   constraint size{HSIZE == BIT_8 -> HWSTRB == 4'h0;
-//                   HSIZE == BIT_16 -> HWSTRB == 4'h1;
-//                   HSIZE == BIT_32 -> HWSTRB == 4'h2;
-//                  }
-//   constraint transfer_type {HTRANS dist {IDLE:=10, BUSY:=10, NONSEQ:=20, SEQ:=60};
-                           
-//  constraint address {HADDR inside {[0:1023]};}
-
+     
   constraint data_size {HWDATA.size() inside {[1:64]};}
 
   constraint size_datawidth {HSIZE inside {BIT_8, BIT_16, BIT_32};}
@@ -80,8 +72,6 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
                    			HSIZE == BIT_256 -> HADDR[4:0] == 5'b0;
                    			HSIZE == BIT_512 -> HADDR[5:0] == 6'b0;
                    			HSIZE == BIT_1024 -> HADDR[6:0] == 7'b0;}
-  
-  //constraint burst{HBURST inside {SINGLE, INCR, INCR4, INCR8, INCR16};}
   
   constraint burst_beat {HBURST == SINGLE -> {burst_length == 1; HWDATA.size() == 1;}
 			 HBURST == INCR -> HWDATA.size() == burst_length;

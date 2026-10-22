@@ -4,7 +4,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
   `uvm_component_utils(ahb_m_driver #(ADDR_WIDTH, DATA_WIDTH))
   
   virtual ahb_if vif;
-  event done;
+  semaphore done = new(0);
   
   bit [DATA_WIDTH-1:0] data_q [$];
   bit [ADDR_WIDTH-1:0] current_addr;
@@ -44,7 +44,6 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   data_q.push_back(req.HWDATA[i]);
    	  	 end
    	  	 current_addr = req.HADDR;
-
    	  	 
    	  	 if(!vif.HRESETn) begin
    	  	   `DRIVE_IF_M.HWRITE <= 0;
@@ -67,7 +66,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	        `DRIVE_IF_M.HADDR <= req.HADDR;
    	  	   	`DRIVE_IF_M.HSIZE <= req.HSIZE;
    	  	   	`uvm_info(get_type_name, $sformatf("[Master Driver 1] Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
-   	  	   	->done;
+   	  	   	done.put(1);
    	  	   end
 
    	  	   else if (req.HBURST == INCR || req.HBURST == INCR4 || req.HBURST == INCR8 || req.HBURST == INCR16) begin
@@ -87,7 +86,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	   `uvm_info(get_type_name, $sformatf("[Master Driver 1] Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
    	  	   	   
    	  	   	   current_addr = current_addr + (1 << req.HSIZE);
-   	  	   	   ->done;
+   	  	   	   done.put(1);
    	  	   	end
    	  	   end
    	  	   else if (req.HBURST == WRAP4 || req.HBURST == WRAP8 || req.HBURST == WRAP16) begin
@@ -115,7 +114,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	   if (current_addr >= upper_boundary) begin
    	  	   		current_addr = wrap_boundary;
    	  	   	   end
-   	  	   	   -> done;
+   	  	   	   done.put(1);
    	  	   	end
    	  	   end
    	  	 end
@@ -129,7 +128,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
   
   task data_phase();
       forever begin
-        wait(done.triggered);      
+        done.get(1);      
 	
         if(!vif.HRESETn) begin
          `DRIVE_IF_M.HWDATA <= 0; 

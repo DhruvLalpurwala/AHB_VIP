@@ -12,7 +12,7 @@ interface ahb_if (input logic HCLK, HRESETn);
   logic HRESP;
 
   clocking ahb_m_driver_cb @(posedge HCLK);
-    default input #1ns output #1step;
+    default input #1step output #0;
     output HADDR;
     output HWDATA;
     output HWRITE;
@@ -25,7 +25,7 @@ interface ahb_if (input logic HCLK, HRESETn);
   endclocking
   
   clocking ahb_s_driver_cb @(posedge HCLK);
-    default input #1step output #0;
+    default input #1step output #1step;
     output HRDATA;
     output HREADYOUT;
     output HRESP;

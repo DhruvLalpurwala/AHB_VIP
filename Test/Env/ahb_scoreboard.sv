@@ -11,11 +11,12 @@ class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sco
   ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) m_queue[$];
   ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) s_queue[$];
   
-  
 //   Reference memory
-  bit [DATA_WIDTH-1:0] sco_mem [bit [ADDR_WIDTH-1:0]];
+  bit [7:0] sco_mem [bit [ADDR_WIDTH-1:0]] = '{default: 0};
   
   int match_count, mismatch_count;
+  //bit [ADDR_WIDTH -1:0] current_addr;
+  //int byte_lane;
   
   function new(string name = "ahb_scoreboard", uvm_component parent);
     super.new(name, parent);
@@ -31,6 +32,7 @@ class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sco
   
   function void write_ahb_m_item_port(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) m_tx);
     m_queue.push_back(m_tx);
+    
   endfunction
   
   function void write_ahb_s_item_port(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) s_tx);
@@ -48,17 +50,9 @@ virtual task run_phase(uvm_phase phase);
     ahb_m_req = m_queue.pop_front();
     ahb_s_req = s_queue.pop_front();
 
-    `uvm_info("SCB_TRACE",
-      $sformatf("MASTER: ADDR=%h HWRITE=%0b HTRANS=%0b HWDATA=%p | SLAVE: ADDR=%h HWRITE=%0b HTRANS=%0b HWDATA=%p HRDATA=%h",
-      		 ahb_m_req.HADDR,
-      	 	 ahb_m_req.HWRITE,
-      	 	 ahb_m_req.HTRANS,
-      	 	 ahb_m_req.HWDATA,
-      	 	 ahb_s_req.HADDR,
-      	 	 ahb_s_req.HWRITE,
-      	 	 ahb_s_req.HTRANS,
-      	 	 ahb_s_req.HWDATA,
-      	 	 ahb_s_req.HRDATA),UVM_MEDIUM)
+    `uvm_info("SCOB", $sformatf("MASTER: ADDR=%h HWRITE=%0b HTRANS=%0b HWDATA=%p | SLAVE: ADDR=%h HWRITE=%0b HTRANS=%0b HWDATA=%p HRDATA=%h",
+      		 ahb_m_req.HADDR, ahb_m_req.HWRITE, ahb_m_req.HTRANS, ahb_m_req.HWDATA,
+      	 	 ahb_s_req.HADDR, ahb_s_req.HWRITE, ahb_s_req.HTRANS, ahb_s_req.HWDATA, ahb_s_req.HRDATA),UVM_MEDIUM)
 
     // Compare address
     if (ahb_m_req.HADDR !== ahb_s_req.HADDR) begin
@@ -85,12 +79,12 @@ virtual task run_phase(uvm_phase phase);
 
         if (ahb_m_req.HWDATA[0] !== ahb_s_req.HWDATA[0]) begin
           mismatch_count++;
-          `uvm_error("SCB_WDATA",$sformatf("Write data mismatch at ADDR=%h: Master=%h Slave=%h",
-              ahb_m_req.HADDR, ahb_m_req.HWDATA[0], ahb_s_req.HWDATA[0]))
+          `uvm_error("SCB_WDATA",$sformatf("Write data mismatch at ADDR=%h: Master=%h Slave=%h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0], ahb_s_req.HWDATA[0]))
         end
         else begin
-          // Update reference memory only after a successful comparison
-          sco_mem[ahb_m_req.HADDR] = ahb_m_req.HWDATA[0];
+          for (int i = 0; i < (1 << ahb_m_req.HSIZE); i++) begin
+          sco_mem[ahb_m_req.HADDR + i] = ahb_m_req.HWDATA[0][8*i +: 8];
+          end
           match_count++;
           `uvm_info("SCB_WRITE", $sformatf("WRITE MATCH: ADDR=%h DATA=%h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0]), UVM_MEDIUM)
         end
@@ -98,23 +92,16 @@ virtual task run_phase(uvm_phase phase);
 
       // Read transaction
       else begin
-        if (sco_mem.exists(ahb_m_req.HADDR)) begin
-
-          if (sco_mem[ahb_m_req.HADDR] === ahb_s_req.HRDATA) begin
-            match_count++;
-            `uvm_info("SCB_READ", $sformatf("READ MATCH: ADDR=%h EXPECTED=%h ACTUAL=%h",
-                        ahb_m_req.HADDR, sco_mem[ahb_m_req.HADDR], ahb_s_req.HRDATA), UVM_MEDIUM)
+          for (int i = 0; i < (1 << ahb_m_req.HSIZE); i++) begin
+            if (sco_mem[ahb_m_req.HADDR + i] === ahb_s_req.HRDATA[8*i +: 8]) begin
+              match_count++;
+              `uvm_info("SCB_READ", $sformatf("READ MATCH: ADDR=%h EXPECTED=%h ACTUAL=%h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
+            end
+            else begin
+              mismatch_count++;
+              `uvm_info("SCB_READ", $sformatf("READ MISMATCH: ADDR=%h EXPECTED=%h ACTUAL=%h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
+            end
           end
-          else begin
-            mismatch_count++;
-
-            `uvm_error("SCB_READ", $sformatf("Read mismatch at ADDR=%h: Expected=%h Actual=%h", ahb_m_req.HADDR, sco_mem[ahb_m_req.HADDR], ahb_s_req.HRDATA))
-          end
-        end
-        else begin
-          mismatch_count++;
-          `uvm_error("SCB_MEM", $sformatf("Read from unwritten address %h", ahb_m_req.HADDR))
-        end
       end
     end
   end
@@ -161,6 +148,30 @@ endtask
  //   end
  //   end
  // endtask
+ 
+//	logic [31:0] aligned_addr;
+//	int byte_lane;
+//	
+//	for (int i = 0; i < number_of_bytes; i++) begin
+//	    // 1. Calculate the actual absolute address for this specific byte
+//	    aligned_addr = ahb_m_req.HADDR + i;
+//	    
+//	    // 2. Find which byte lane on the AHB bus this address maps to (for 32-bit bus: % 4)
+//	    byte_lane = aligned_addr % 4; 
+//	    
+//	    // 3. Store the correct byte lane into your scoreboard memory
+//	    sco_mem[aligned_addr] = ahb_m_req.HWDATA[8*byte_lane +: 8];
+//	end
+//        else begin
+//          for (int i = 0; i < (1 << ahb_m_req.HSIZE); i++) begin
+//          current_addr = ahb_m_req.HADDR + i;
+//          byte_lane = current_addr % 4;
+//          sco_mem[ahb_m_req.HADDR + i] = ahb_m_req.HWDATA[8*(byte_lane) +: 8];
+//          end
+//          match_count++;
+//          `uvm_info("SCB_WRITE", $sformatf("WRITE MATCH: ADDR=%h DATA=%h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0]), UVM_MEDIUM)
+//        end
+//      end
   
   function void report_phase(uvm_phase phase);
     super.report_phase(phase);

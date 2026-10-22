@@ -4,12 +4,12 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   `uvm_component_utils(ahb_s_monitor #(ADDR_WIDTH, DATA_WIDTH))
   
   virtual ahb_if vif;
-  event done;
+  semaphore done = new(0);
 
   uvm_analysis_port #(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH)) ahb_s_item_port;
   ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_q [$], addr_q [$];
   
-  function new(string name = "ahb_s_monitor", uvm_component parent = null);
+  function new(string name = "ahb_m_monitor", uvm_component parent = null);
     super.new(name, parent);
     ahb_s_item_port = new("ahb_s_item_port", this);
     //ahb_m_mon_item = new();
@@ -23,7 +23,7 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 
   task run_phase(uvm_phase phase);
       wait_for_reset();
-      //@(vif.AHB_S_MONITOR.ahb_s_monitor_cb);
+      //@(vif.AHB_M_MONITOR.ahb_m_monitor_cb);
       //`uvm_info(get_type_name, $sformatf("[Master Mon] After 1st clk"), UVM_NONE);
     fork
       address_phase();
@@ -44,7 +44,7 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
           addr_item.HSIZE = transfer_size'(`MON_IF_S.HSIZE);
           addr_item.HBURST = burst_operation'(`MON_IF_S.HBURST);
  	  addr_q.push_back(addr_item);
-          -> done;
+          done.put(1);
         end
     end
   endtask
@@ -53,13 +53,13 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
     ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_item;
     //@done;
     forever begin
-        @done;
+        done.get(1);
         @(`MON_IF_S);
         data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("data_item");
         if (vif.HRESETn && `MON_IF_S.HREADYOUT) begin
           //if (`MON_IF_S.HWRITE) begin
              //d_queue.push_back(`MON_IF_S.HWDATA)
-             data_item.HWDATA.push_back(`MON_IF_M.HWDATA);
+             data_item.HWDATA.push_back(`MON_IF_S.HWDATA);
           //end
           //else begin
              data_item.HRDATA = `MON_IF_S.HRDATA;
@@ -72,7 +72,7 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   task monitor();
      forever begin
         ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) temp_data_item, temp_addr_item, mon_item;
-        wait (data_q.size() > 0 && addr_q.size() > 0);
+        wait (data_q.size() > 0);
           temp_data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_data_item");
           temp_addr_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_addr_item");
              temp_data_item = data_q.pop_front();

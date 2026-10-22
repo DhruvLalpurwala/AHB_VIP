@@ -4,7 +4,7 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   `uvm_component_utils(ahb_m_monitor #(ADDR_WIDTH, DATA_WIDTH))
   
   virtual ahb_if vif;
-  event done;
+  semaphore done = new(0);
 
   uvm_analysis_port #(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH)) ahb_m_item_port;
   ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_q [$], addr_q [$];
@@ -45,7 +45,7 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
           addr_item.HBURST = burst_operation'(`MON_IF_M.HBURST);
           `uvm_info(get_type_name, $sformatf("[Master Mon] Address = %0h , write = %0b",`MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
  	  addr_q.push_back(addr_item);
-          -> done;
+          done.put(1);
         end
     end
   endtask
@@ -53,8 +53,9 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   task data_phase();
     ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_item;
     //@done;
+    //done.get(1);
     forever begin
-        @done;
+        done.get(1);
         @(`MON_IF_M);
         data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("data_item");
         if (vif.HRESETn && `MON_IF_M.HREADYOUT) begin
@@ -68,6 +69,7 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
              `uvm_info(get_type_name, $sformatf("[Master Mon Read] RData = %0h", `MON_IF_M.HRDATA), UVM_NONE);
           //end
 	  data_q.push_back(data_item);
+          `uvm_info(get_type_name(),$sformatf("size: %0d", data_q.size()),UVM_LOW)
         end
     end
   endtask
@@ -75,7 +77,9 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   task monitor();
      forever begin
         ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) temp_data_item, temp_addr_item, mon_item;
-        wait (data_q.size() > 0 && addr_q.size() > 0);
+        `uvm_info(get_type_name(),$sformatf("RUN_PHASE started size : %0d and %0d",data_q.size(), addr_q.size()),UVM_LOW)
+        wait (data_q.size() > 0);
+          `uvm_info(get_type_name(),$sformatf("size: %0d > 0", data_q.size()),UVM_LOW)
           temp_data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_data_item");
           temp_addr_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_addr_item");
              temp_data_item = data_q.pop_front();
