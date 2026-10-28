@@ -12,7 +12,6 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   function new(string name = "ahb_m_monitor", uvm_component parent = null);
     super.new(name, parent);
     ahb_m_item_port = new("ahb_m_item_port", this);
-    //ahb_m_mon_item = new();
   endfunction
   
   function void build_phase(uvm_phase phase);
@@ -23,8 +22,6 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 
   task run_phase(uvm_phase phase);
       wait_for_reset();
-      //@(vif.AHB_M_MONITOR.ahb_m_monitor_cb);
-      //`uvm_info(get_type_name, $sformatf("[Master Mon] After 1st clk"), UVM_NONE);
     fork
       address_phase();
       data_phase();
@@ -43,7 +40,7 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
           addr_item.HTRANS = transfer_type'(`MON_IF_M.HTRANS);
           addr_item.HSIZE = transfer_size'(`MON_IF_M.HSIZE);
           addr_item.HBURST = burst_operation'(`MON_IF_M.HBURST);
-          `uvm_info(get_type_name, $sformatf("[Master Mon] Address = %0h , write = %0b",`MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
+          `uvm_info("Master Mon", $sformatf("Address = %0h , write = %0b",`MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
  	  addr_q.push_back(addr_item);
           done.put(1);
         end
@@ -52,34 +49,22 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 
   task data_phase();
     ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_item;
-    //@done;
-    //done.get(1);
     forever begin
         done.get(1);
         @(`MON_IF_M);
         data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("data_item");
-        if (vif.HRESETn && `MON_IF_M.HREADYOUT) begin
-          //if (addr_q.HWRITE == 1'b1) begin
-             //d_queue.push_back(`MON_IF_M.HWDATA)
              data_item.HWDATA.push_back(`MON_IF_M.HWDATA);
-             `uvm_info(get_type_name, $sformatf("[Master Mon Write] WData = %0h", `MON_IF_M.HWDATA), UVM_NONE);
-          //end
-          //else begin
+             `uvm_info("Master Mon Write", $sformatf("WData = %0h", `MON_IF_M.HWDATA), UVM_NONE);
              data_item.HRDATA = `MON_IF_M.HRDATA;
-             `uvm_info(get_type_name, $sformatf("[Master Mon Read] RData = %0h", `MON_IF_M.HRDATA), UVM_NONE);
-          //end
-	  data_q.push_back(data_item);
-          `uvm_info(get_type_name(),$sformatf("size: %0d", data_q.size()),UVM_LOW)
-        end
+             `uvm_info("Master Mon Read", $sformatf("RData = %0h", `MON_IF_M.HRDATA), UVM_NONE);
+	     data_q.push_back(data_item);
     end
   endtask
 
   task monitor();
      forever begin
         ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) temp_data_item, temp_addr_item, mon_item;
-        `uvm_info(get_type_name(),$sformatf("RUN_PHASE started size : %0d and %0d",data_q.size(), addr_q.size()),UVM_LOW)
         wait (data_q.size() > 0);
-          `uvm_info(get_type_name(),$sformatf("size: %0d > 0", data_q.size()),UVM_LOW)
           temp_data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_data_item");
           temp_addr_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("temp_addr_item");
              temp_data_item = data_q.pop_front();
@@ -97,10 +82,9 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
           else begin
              mon_item.HRDATA = temp_data_item.HRDATA;
           end
-             `uvm_info(get_type_name, $sformatf("[Master Mon Sample] Addr = %0p, WData = %0p", temp_addr_item.HADDR, temp_data_item.HWDATA), UVM_NONE);
-             //mon_item.HRDATA = temp_data_item.HRDATA;
+             `uvm_info("Master Mon Sample", $sformatf("Addr = %0p, WData = %0p", temp_addr_item.HADDR, temp_data_item.HWDATA), UVM_NONE);
              ahb_m_item_port.write(mon_item);
-             `uvm_info(get_type_name, "Write Done", UVM_NONE);
+             `uvm_info("Master Mon", "Write Done", UVM_NONE);
      end
   endtask
 
@@ -109,56 +93,3 @@ class ahb_m_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   endtask
 
 endclass
-
-
-//  task run_phase(uvm_phase phase);
-//      wait_for_reset();
-//      @(vif.AHB_M_MONITOR.ahb_m_monitor_cb);
-//      `uvm_info(get_type_name, $sformatf("[Master Mon] After 1st clk"), UVM_NONE);
-//      monitor();     
-//  endtask
-//
-//  task monitor();
-//     forever begin
-//       
-//       //if (vif.HRESETn && vif.HREADYOUT) begin
-//	//wait(vif.HRESETn);
-//
-//       	//@(posedge vif.HCLK);
-//        //wait (`MON_IF_M.HREADYOUT); 
-//
-//	@(vif.AHB_M_MONITOR.ahb_m_monitor_cb);
-//	 // while(!vif.HREADYOUT) begin
-//	 // 	@(vif.AHB_M_MONITOR.ahb_m_monitor_cb);
-//	 // end
-//	if (vif.HRESETn && `MON_IF_M.HREADYOUT && `MON_IF_M.HTRANS == NONSEQ || `MON_IF_M.HTRANS == SEQ) begin 
-//	  ahb_m_mon_item.HWRITE = `MON_IF_M.HWRITE;
-//          ahb_m_mon_item.HADDR = `MON_IF_M.HADDR;
-//          ahb_m_mon_item.HBURST = `MON_IF_M.HBURST;
-//          ahb_m_mon_item.HSIZE = `MON_IF_M.HSIZE;
-//          `uvm_info(get_type_name, $sformatf("[Master Mon] Address = %0h , write = %0b",`MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
-//	 
-//  
-//         if(`MON_IF_M.HWRITE) begin
-//           @(vif.AHB_M_MONITOR.ahb_mon_neg_cb);
-//	   //@(negedge vif.HCLK);
-//	   data_q.push_back(vif.AHB_M_MONITOR.ahb_mon_neg_cb.HWDATA);
-//           ahb_m_mon_item.HWDATA = data_q;
-//           `uvm_info(get_type_name, $sformatf("[Master Mon Write] WData = %0h", vif.AHB_M_MONITOR.ahb_mon_neg_cb.HWDATA), UVM_NONE);
-//         end
-//         else if(!`MON_IF_M.HWRITE) begin
-//           @(vif.AHB_M_MONITOR.ahb_mon_neg_cb);
-//	   //@(negedge vif.HCLK);
-//           ahb_m_mon_item.HRDATA = vif.AHB_M_MONITOR.ahb_mon_neg_cb.HRDATA;
-//           `uvm_info(get_type_name, $sformatf("[Master Mon READ] RData = %0h", vif.AHB_M_MONITOR.ahb_mon_neg_cb.HRDATA), UVM_NONE);
-//         end
-//  //      `uvm_info(get_type_name, $sformatf("[Master Mon 888] Ready = %0b, Data = %0h, RData = %0h, Address = %0h , write = %0b",`MON_IF_M.HREADYOUT, `MON_IF_M.HWDATA, `MON_IF_M.HRDATA, `MON_IF_M.HADDR, `MON_IF_M.HWRITE), UVM_NONE);
-//         ahb_m_item_port.write(ahb_m_mon_item);
-//        `uvm_info(get_type_name, "Write Done", UVM_NONE);
-//        end
-//     end
-//  endtask
-//
-//  task wait_for_reset();
-//    wait (vif.HRESETn);
-//  endtask

@@ -12,7 +12,6 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
   function new(string name = "ahb_m_monitor", uvm_component parent = null);
     super.new(name, parent);
     ahb_s_item_port = new("ahb_s_item_port", this);
-    //ahb_m_mon_item = new();
   endfunction
   
   function void build_phase(uvm_phase phase);
@@ -23,8 +22,6 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 
   task run_phase(uvm_phase phase);
       wait_for_reset();
-      //@(vif.AHB_M_MONITOR.ahb_m_monitor_cb);
-      //`uvm_info(get_type_name, $sformatf("[Master Mon] After 1st clk"), UVM_NONE);
     fork
       address_phase();
       data_phase();
@@ -51,21 +48,13 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
 
   task data_phase();
     ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) data_item;
-    //@done;
     forever begin
         done.get(1);
         @(`MON_IF_S);
         data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("data_item");
-        if (vif.HRESETn && `MON_IF_S.HREADYOUT) begin
-          //if (`MON_IF_S.HWRITE) begin
-             //d_queue.push_back(`MON_IF_S.HWDATA)
              data_item.HWDATA.push_back(`MON_IF_S.HWDATA);
-          //end
-          //else begin
              data_item.HRDATA = `MON_IF_S.HRDATA;
-          //end
 	  data_q.push_back(data_item);
-        end
     end
   endtask
 
@@ -84,7 +73,6 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
              mon_item.HTRANS = temp_addr_item.HTRANS;
              mon_item.HSIZE = temp_addr_item.HSIZE;
              mon_item.HBURST = temp_addr_item.HBURST;
-            // mon_item.HWDATA = temp_data_item.HWDATA;
           if(temp_addr_item.HWRITE) begin
              mon_item.HWDATA = temp_data_item.HWDATA;
           end
@@ -92,7 +80,7 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
              mon_item.HRDATA = temp_data_item.HRDATA;
           end
              ahb_s_item_port.write(mon_item);
-             `uvm_info(get_type_name, "Write Done", UVM_NONE);
+             `uvm_info("Slave Mon", "Write Done", UVM_NONE);
      end
   endtask
 
