@@ -152,6 +152,10 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
 	    `DRIVE_IF_M.HWDATA <= data_q.pop_front();  //pop the data from data queue and drive to interface
 	    `uvm_info("QUEUE_PRINT", $sformatf("Queue contents: %p", data_q), UVM_LOW)
            end
+           else begin
+            req.HRDATA <= `DRIVE_IF_M.HRDATA;
+            `uvm_info("Master Driver", $sformatf("Read Data: %h", `DRIVE_IF_M.HRDATA), UVM_LOW)
+           end
         end
       end
   endtask

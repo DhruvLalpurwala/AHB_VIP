@@ -99,7 +99,9 @@ virtual task run_phase(uvm_phase phase);
 
       // Read transaction
       else begin
+        //if(sco_mem.exists(ahb_m_req.HADDR)) begin
           for (int i = 0; i < (1 << ahb_m_req.HSIZE); i++) begin
+           if(sco_mem.exists(ahb_m_req.HADDR+i)) begin
             if (sco_mem[ahb_m_req.HADDR + i] === ahb_s_req.HRDATA[8*i +: 8]) begin
               match_count++;
               `uvm_info("SCB_READ", $sformatf("READ MATCH: ADDR=%h EXPECTED=%h ACTUAL=%h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
@@ -108,6 +110,7 @@ virtual task run_phase(uvm_phase phase);
               mismatch_count++;
               `uvm_info("SCB_READ", $sformatf("READ MISMATCH: ADDR=%h EXPECTED=%h ACTUAL=%h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
             end
+           end
           end
       end
     end

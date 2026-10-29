@@ -41,7 +41,7 @@ class ahb_s_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
 
   task run_phase(uvm_phase phase);    
     init();     //task performs the initialization of signals
-    wait_for_reset(); //task performs wait for reset to be 1
+    wait_for_reset(); //task performs wait for reset until 1
     fork
        address_phase(); //task to drive address and control signals
        data_phase();    //task to drive the wdata signal

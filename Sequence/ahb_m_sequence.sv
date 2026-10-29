@@ -97,7 +97,7 @@ class ahb_wr_wr_rd extends ahb_m_sequence;
 endclass
 
                                                         //////Back to Back Write on same Address/////////////
-class ahb_wr_wr  extends ahb_m_sequence ;
+class ahb_wr_wr extends ahb_m_sequence ;
     `uvm_object_utils(ahb_wr_wr)
 
     bit[31:0] ADDR_L;
@@ -202,9 +202,9 @@ class ahb_burst extends ahb_m_sequence ;
       `uvm_info(get_type_name, "inside body", UVM_LOW);
       req = ahb_seq_item #(32, 32)::type_id::create("req");
       start_item(req);
-        	assert(req.randomize with {HWRITE == 1'b1;
+        	assert(req.randomize with {HWRITE == 1'b0; HADDR == 'd1020;
       			   	   	   HBURST == 2;
-					   HSIZE == BIT_16;});
+					   HSIZE == BIT_32;});
 	req.print();
       finish_item(req);
     endtask
@@ -227,7 +227,7 @@ class ahb_wr_rd_diff_size  extends ahb_m_sequence ;
       start_item(req);
         	assert(req.randomize with {HWRITE == 1'b1;
       			   	   	   HBURST == 0;
-					   HSIZE == BIT_32;});
+					   HSIZE == BIT_16;});
         ADDR_L = req.HADDR;
 	req.print();
       finish_item(req);
@@ -236,7 +236,7 @@ class ahb_wr_rd_diff_size  extends ahb_m_sequence ;
       start_item(req);
         	assert(req.randomize with {HWRITE == 1'b0; HADDR == ADDR_L;
       			   	   	   HBURST == 0;
-					   HSIZE == BIT_16;});
+					   HSIZE == BIT_32;});
 	req.print();
       finish_item(req);
     endtask
