@@ -6,6 +6,7 @@ interface ahb_if (input logic HCLK, HRESETn);
   logic [2:0] HBURST;
   logic [2:0] HSIZE;
   logic [1:0] HTRANS;
+  logic [3:0] HWSTRB;
   
   logic [31:0] HRDATA;
   logic HREADYOUT;
@@ -19,6 +20,7 @@ interface ahb_if (input logic HCLK, HRESETn);
     output HBURST;
     output HSIZE;
     output HTRANS;
+    output HWSTRB;
     input HRDATA;
     input HREADYOUT;
     input HRESP;
@@ -35,6 +37,7 @@ interface ahb_if (input logic HCLK, HRESETn);
     input HBURST;
     input HSIZE;
     input HTRANS;
+    input HWSTRB;
   endclocking
 
   clocking ahb_m_monitor_cb @(posedge HCLK);
@@ -48,6 +51,7 @@ interface ahb_if (input logic HCLK, HRESETn);
     input HBURST;
     input HSIZE;
     input HTRANS;
+    input HWSTRB;
   endclocking
   
   clocking ahb_s_monitor_cb @(posedge HCLK);
@@ -61,6 +65,7 @@ interface ahb_if (input logic HCLK, HRESETn);
     input HBURST;
     input HSIZE;
     input HTRANS;
+    input HWSTRB;
   endclocking
   
   modport AHB_M_DRIVER  (clocking ahb_m_driver_cb, input HCLK, HRESETn);

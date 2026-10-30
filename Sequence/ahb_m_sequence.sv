@@ -298,7 +298,6 @@ class ahb_addr_boundary extends ahb_m_sequence;
                 end
 	req.print();
       finish_item(req);
-
       //end
     endtask
 endclass

@@ -15,6 +15,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
   bit [DATA_WIDTH-1:0] data_q [$];   // Data queue for sync the data with address
   bit [ADDR_WIDTH-1:0] current_addr; // current address for burst operation
   int i;
+ // bit [(DATA_WIDTH/8)-1:0] strb;
 
   bit [ADDR_WIDTH-1:0] wrap_boundary; //Wrap boundary (lower boundary) for WRAP burst operation address restart from wrap boundary
   bit [ADDR_WIDTH-1:0] upper_boundary;//Upper boundary for WRAP burst operation so that address should not cross the upper boundary
@@ -57,6 +58,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   `DRIVE_IF_M.HTRANS <= IDLE;
    	  	   `DRIVE_IF_M.HBURST <= 0;
    	  	   `DRIVE_IF_M.HSIZE <= 0;
+                   `DRIVE_IF_M.HWSTRB <= 0; 
    	  	 end
    	  	 else begin
    	  	   if (req.HBURST == SINGLE) begin   //HBurst is single
@@ -70,6 +72,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	`DRIVE_IF_M.HWRITE <= req.HWRITE;
    	  	        `DRIVE_IF_M.HADDR <= req.HADDR;
    	  	   	`DRIVE_IF_M.HSIZE <= req.HSIZE;
+                        `DRIVE_IF_M.HWSTRB <= req.HWSTRB.pop_front();
    	  	   	`uvm_info("Master Driver 1" , $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
    	  	   	done.put(1);   //Once signal drives at interface, semphone put a key so that driver get the key and this two phase work as pipeline
    	  	   end
@@ -88,6 +91,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	   `DRIVE_IF_M.HSIZE <= req.HSIZE;
    	  	   	   `DRIVE_IF_M.HADDR <= current_addr;
    	  	   	   `DRIVE_IF_M.HWRITE <= req.HWRITE;
+                           `DRIVE_IF_M.HWSTRB <= req.HWSTRB.pop_front();
    	  	   	   `uvm_info("Master Driver 1", $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
    	  	   	   
    	  	   	   current_addr = current_addr + (1 << req.HSIZE);    //HADDR[i] = HADDR[i-1] + HSIZE
@@ -115,6 +119,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	   `DRIVE_IF_M.HSIZE <= req.HSIZE;
    	  	   	   `DRIVE_IF_M.HADDR <= current_addr; 
    	  	   	   `DRIVE_IF_M.HWRITE <= req.HWRITE;
+                           `DRIVE_IF_M.HWSTRB <= req.HWSTRB.pop_front();
    	  	   	   `uvm_info("Master Driver 1", $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
 
    	  	   	   current_addr = current_addr + (1 << req.HSIZE);    //HADDR[i] = HADDR[i-1] + HSIZE
@@ -169,6 +174,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
     `DRIVE_IF_M.HWRITE <= 0;
     `DRIVE_IF_M.HADDR <= 0;
     `DRIVE_IF_M.HWDATA <= 0; 
+    `DRIVE_IF_M.HWSTRB <= 0; 
     `DRIVE_IF_M.HTRANS <= IDLE;
     `DRIVE_IF_M.HBURST <= 0;
     `DRIVE_IF_M.HSIZE <= 0;

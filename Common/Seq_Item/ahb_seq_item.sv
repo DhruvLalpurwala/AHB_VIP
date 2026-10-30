@@ -18,7 +18,7 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
   rand burst_operation HBURST;            ////Burst signal for select burst operation
   rand transfer_size HSIZE;               ////Size signal for select transfer size
   rand transfer_type HTRANS;              ////Trans signal for select transfer type
-  rand bit [(DATA_WIDTH/8)-1:0] HWSTRB;   ////Write Strobe -> (DATA_WIDTH/8)-1:0
+  rand bit [(DATA_WIDTH/8)-1:0] HWSTRB[$];   ////Write Strobe -> (DATA_WIDTH/8)-1:0
   rand int burst_length;                  ////burst length used to select the length according to burst operation
 
   bit [DATA_WIDTH-1:0] HRDATA;            ////Read data stored from slave
@@ -72,6 +72,10 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
                    			HSIZE == BIT_256 -> HADDR[4:0] == 5'b0;
                    			HSIZE == BIT_512 -> HADDR[5:0] == 6'b0;
                    			HSIZE == BIT_1024 -> HADDR[6:0] == 7'b0;}
+
+  constraint write_strobe {if (!HWRITE) {
+                              foreach(HWSTRB[i])
+                              HWSTRB[i] == 0;}}
   
   //// Burst length and size of wdata queue depend on the burst operation 
   constraint burst_beat {HBURST == SINGLE -> {burst_length == 1; HWDATA.size() == 1;}
@@ -79,6 +83,8 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
 			 (HBURST == INCR4) || (HBURST == WRAP4) -> {burst_length == 4; HWDATA.size() == 4;}
                          (HBURST == INCR8) || (HBURST == WRAP8) -> {burst_length == 8; HWDATA.size() == 8;}
                          (HBURST == INCR16) || (HBURST == WRAP16) -> {burst_length == 16; HWDATA.size() == 16;}}
+
+  constraint strb_size {HWSTRB.size() == burst_length;}
 
   //// Address should be in 1kb boundary for burst operation
   constraint ahb_1kb_boundary {soft HADDR/1024 == ((HADDR + (burst_length * (1 << HSIZE)) - 1) / 1024);}
