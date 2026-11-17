@@ -1,7 +1,8 @@
   ////File Name: ahb_m_driver.sv
   ////Author Name: Dhruv Lalpurwala
   ////Propetier Name: ASICraft Technologies LLP
-  ////Description: This master driver drives the signals to interface  
+  ////Description: This master driver drives the signals to interface also calculate
+  //// the next address for burst operations like incr and wrap 
   /////////////////////////////////////////////////////
 
 `define DRIVE_IF_M vif.ahb_m_driver_cb //define clocking block 
@@ -32,7 +33,6 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
   endfunction
   
   task run_phase(uvm_phase phase);
-    
     init();  //task performs the initialization of signals
     wait_for_reset(); //task performs wait for reset to be 1
     fork
@@ -73,13 +73,14 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	        `DRIVE_IF_M.HADDR <= req.HADDR;
    	  	   	`DRIVE_IF_M.HSIZE <= req.HSIZE;
                         `DRIVE_IF_M.HWSTRB <= req.HWSTRB.pop_front();
-   	  	   	`uvm_info("Master Driver 1" , $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
+   	  	   	`uvm_info("MASTER_DRIVER" , $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE)
    	  	   	done.put(1);   //Once signal drives at interface, semphone put a key so that driver get the key and this two phase work as pipeline
    	  	   end
 
                        //Burst is INCR, INCR4, INCR8, INCR16
    	  	   else if (req.HBURST == INCR || req.HBURST == INCR4 || req.HBURST == INCR8 || req.HBURST == INCR16) begin 
    	  	   	for(i=0; i < req.burst_length; i++) begin  //according burst length the loop increments for driving the beats acc. to incr, incr4, incr8, incr16
+   	  	   	//`uvm_info(get_type_name, $sformatf("84 line I = %0d", i), UVM_LOW);
    	  	   	@(`DRIVE_IF_M);                            //change in clocking block
    	  	   	`uvm_info(get_type_name, $sformatf("I = %0d", i), UVM_LOW);
    	  	           while (!`DRIVE_IF_M.HREADYOUT) begin  //Hreadyout is 0 -> insert the wait cycles
@@ -92,7 +93,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	   `DRIVE_IF_M.HADDR <= current_addr;
    	  	   	   `DRIVE_IF_M.HWRITE <= req.HWRITE;
                            `DRIVE_IF_M.HWSTRB <= req.HWSTRB.pop_front();
-   	  	   	   `uvm_info("Master Driver 1", $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
+   	  	   	   `uvm_info("MASTER_DRIVER", $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE)
    	  	   	   
    	  	   	   current_addr = current_addr + (1 << req.HSIZE);    //HADDR[i] = HADDR[i-1] + HSIZE
    	  	   	   done.put(1);  //Once signal drives at interface, semphone put a key so that driver get the key and this two phase work as pipeline
@@ -103,16 +104,16 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   else if (req.HBURST == WRAP4 || req.HBURST == WRAP8 || req.HBURST == WRAP16) begin
                         // Wrap boundary/ lower boundary calculation
    	  	   	wrap_boundary = (current_addr/((1 << req.HSIZE)*req.burst_length))*((1 << req.HSIZE)*req.burst_length);
-   	  	     	`uvm_info(get_type_name, $sformatf("[Master Driver 0] Wrap Boundary = %0h, Address = %0h", wrap_boundary, current_addr), UVM_NONE);
+   	  	     	`uvm_info("MASTER_DRIVER", $sformatf("Wrap Boundary = %0h, Address = %0h", wrap_boundary, current_addr), UVM_NONE);
    	  	   	upper_boundary = wrap_boundary + ((1 << req.HSIZE)*req.burst_length); //upper boundary calculation
-   	  	   	`uvm_info(get_type_name, $sformatf("[Master Driver 1] upper boundary = %0h", upper_boundary), UVM_NONE);
+   	  	   	`uvm_info("MASTER_DRIVER", $sformatf("upper boundary = %0h", upper_boundary), UVM_NONE)
    	  	   	
    	  	   	for(i=0; i < req.burst_length; i++) begin //according burst length the loop increments for driving the beats acc. wrap4, wrap8, wrap16
    	  	   	@(`DRIVE_IF_M);  //change in clocking block
    	  	   	while (!`DRIVE_IF_M.HREADYOUT) begin     //Hreadyout is 0 -> insert the wait cycles
    	  	   		@(`DRIVE_IF_M);
    	  	   	end
-   	  	           `uvm_info(get_type_name, $sformatf("I = %0d", i), UVM_LOW); 
+   	  	           //`uvm_info(get_type_name, $sformatf("I = %0d", i), UVM_LOW); 
                        //Drive req of address and control signals to interface
    	  	   	   `DRIVE_IF_M.HTRANS <= (i == 0)? NONSEQ : SEQ;  //First beat transfer type should be NONSEQ and then SEQ
    	  	   	   `DRIVE_IF_M.HBURST <= req.HBURST;
@@ -120,7 +121,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
    	  	   	   `DRIVE_IF_M.HADDR <= current_addr; 
    	  	   	   `DRIVE_IF_M.HWRITE <= req.HWRITE;
                            `DRIVE_IF_M.HWSTRB <= req.HWSTRB.pop_front();
-   	  	   	   `uvm_info("Master Driver 1", $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE);
+   	  	   	   `uvm_info("MASTER_DRIVER", $sformatf("Address = %0h , write = %0b", current_addr, req.HWRITE), UVM_NONE)
 
    	  	   	   current_addr = current_addr + (1 << req.HSIZE);    //HADDR[i] = HADDR[i-1] + HSIZE
    	  	   	   if (current_addr >= upper_boundary) begin          //HADDR[i] >= upper boundary
@@ -159,7 +160,7 @@ class ahb_m_driver #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_drive
            end
            else begin
             req.HRDATA <= `DRIVE_IF_M.HRDATA;
-            `uvm_info("Master Driver", $sformatf("Read Data: %h", `DRIVE_IF_M.HRDATA), UVM_LOW)
+            `uvm_info("MASTER_DRIVER", $sformatf("Read Data: %h", `DRIVE_IF_M.HRDATA), UVM_LOW)
            end
         end
       end

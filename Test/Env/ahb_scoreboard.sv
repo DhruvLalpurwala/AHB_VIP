@@ -1,5 +1,12 @@
-`uvm_analysis_imp_decl(_ahb_m_item_port)
-`uvm_analysis_imp_decl(_ahb_s_item_port)
+  ////file name: ahb_scoreboard.sv
+  ////author name: dhruv lalpurwala
+  ////propetier name: asicraft technologies llp
+  ////description: this scoreboard get the address, control signals and data from
+  ////master monitor and slave monitor, compare it with expected and actual data 
+  /////////////////////////////////////////////////////
+
+`uvm_analysis_imp_decl(_ahb_m_item_port)   //analysis imp for master port declaration
+`uvm_analysis_imp_decl(_ahb_s_item_port)  //analysis imp for slave port declaration
 
 class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_scoreboard;
   `uvm_component_utils(ahb_scoreboard #(ADDR_WIDTH, DATA_WIDTH))
@@ -12,33 +19,19 @@ class ahb_scoreboard #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_sco
   
 //   Reference memory
   logic [7:0] sco_mem [bit [ADDR_WIDTH-1:0]];
-  bit [7:0] temp_fixed_mem [0:1023];
+//  bit [7:0] temp_fixed_mem [0:1023];   //temporary memory for preloading
+//  string mem_file;  //memory file
   
-  int match_count, mismatch_count;
+  int match_count, mismatch_count;   
   
   function new(string name = "ahb_scoreboard", uvm_component parent);
     super.new(name, parent);
-    m_imp = new("m_imp", this);
-    s_imp = new("s_imp", this);
+    m_imp = new("m_imp", this);  //master instance create
+    s_imp = new("s_imp", this);  //slave instance create
   endfunction
 
-  function void build_phase(uvm_phase phase);
-
-    super.build_phase(phase);
-
-    $readmemh("memory_data.txt", temp_fixed_mem);
-                      `uvm_info("Slave Driver Mem Read", $sformatf("mem = %0p", temp_fixed_mem), UVM_NONE);
-
-    foreach (temp_fixed_mem[i]) begin
-      sco_mem[i] = temp_fixed_mem[i];
-    end
-
-  endfunction
-
-  
   function void write_ahb_m_item_port(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) m_tx);
-    m_queue.push_back(m_tx);
-    
+    m_queue.push_back(m_tx);    //push the transaction from master monitor to m queue
   endfunction
   
   function void write_ahb_s_item_port(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) s_tx);
@@ -57,14 +50,14 @@ virtual task run_phase(uvm_phase phase);
     ahb_m_req = m_queue.pop_front();
     ahb_s_req = s_queue.pop_front();
 
-    `uvm_info("SCOB", $sformatf("MASTER: ADDR=%h HWRITE=%0b HTRANS=%0b HWDATA=%p | SLAVE: ADDR=%h HWRITE=%0b HTRANS=%0b HWDATA=%p HRDATA=%h",
+    `uvm_info("SCOB", $sformatf("MASTER: ADDR=%0h HWRITE=%0b HTRANS=%0b HWDATA=%0p | SLAVE: ADDR=%0h HWRITE=%0b HTRANS=%0b HWDATA=%0p HRDATA=%0h",
       		 ahb_m_req.HADDR, ahb_m_req.HWRITE, ahb_m_req.HTRANS, ahb_m_req.HWDATA,
       	 	 ahb_s_req.HADDR, ahb_s_req.HWRITE, ahb_s_req.HTRANS, ahb_s_req.HWDATA, ahb_s_req.HRDATA),UVM_MEDIUM)
 
     // Compare address
     if (ahb_m_req.HADDR !== ahb_s_req.HADDR) begin
       mismatch_count++;
-      `uvm_error("SCB_ADDR", $sformatf("Address mismatch: Master=%h Slave=%h",ahb_m_req.HADDR, ahb_s_req.HADDR))
+      `uvm_error("SCB_ADDR", $sformatf("Address mismatch: Master=%0h Slave=%0h",ahb_m_req.HADDR, ahb_s_req.HADDR))
     end
 
     //  Compare read/write control
@@ -86,14 +79,14 @@ virtual task run_phase(uvm_phase phase);
 
         if (ahb_m_req.HWDATA[0] !== ahb_s_req.HWDATA[0]) begin
           mismatch_count++;
-          `uvm_error("SCB_WDATA",$sformatf("Write data mismatch at ADDR=%h: Master=%h Slave=%h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0], ahb_s_req.HWDATA[0]))
+          `uvm_error("SCB_WDATA",$sformatf("Write data mismatch at ADDR=%0h: Master=%0h Slave=%0h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0], ahb_s_req.HWDATA[0]))
         end
         else begin
           for (int i = 0; i < (1 << ahb_m_req.HSIZE); i++) begin
           sco_mem[ahb_m_req.HADDR + i] = ahb_m_req.HWDATA[0][8*i +: 8];
           end
           match_count++;
-          `uvm_info("SCB_WRITE", $sformatf("WRITE MATCH: ADDR=%h DATA=%h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0]), UVM_MEDIUM)
+          `uvm_info("SCB_WRITE", $sformatf("WRITE MATCH: ADDR=%0h DATA=%0h", ahb_m_req.HADDR, ahb_m_req.HWDATA[0]), UVM_MEDIUM)
         end
       end
 
@@ -101,14 +94,14 @@ virtual task run_phase(uvm_phase phase);
       else begin
         //if(sco_mem.exists(ahb_m_req.HADDR)) begin
           for (int i = 0; i < (1 << ahb_m_req.HSIZE); i++) begin
-           if(sco_mem.exists(ahb_m_req.HADDR+i)) begin
+           if(sco_mem.exists(ahb_m_req.HADDR+i)) begin    //address exists in scoreboard memory?
             if (sco_mem[ahb_m_req.HADDR + i] === ahb_s_req.HRDATA[8*i +: 8]) begin
               match_count++;
-              `uvm_info("SCB_READ", $sformatf("READ MATCH: ADDR=%h EXPECTED=%h ACTUAL=%h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
+              `uvm_info("SCB_READ", $sformatf("READ MATCH: ADDR=%0h EXPECTED=%0h ACTUAL=%0h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
             end
             else begin
               mismatch_count++;
-              `uvm_info("SCB_READ", $sformatf("READ MISMATCH: ADDR=%h EXPECTED=%h ACTUAL=%h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
+              `uvm_info("SCB_READ", $sformatf("READ MISMATCH: ADDR=%0h EXPECTED=%0h ACTUAL=%0h", ahb_m_req.HADDR+i, sco_mem[ahb_m_req.HADDR+i], ahb_s_req.HRDATA[8*i +: 8]), UVM_MEDIUM)
             end
            end
           end

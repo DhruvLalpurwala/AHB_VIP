@@ -48,6 +48,7 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
           addr_item.HTRANS = transfer_type'(`MON_IF_S.HTRANS);
           addr_item.HSIZE = transfer_size'(`MON_IF_S.HSIZE);
           addr_item.HBURST = burst_operation'(`MON_IF_S.HBURST);
+          `uvm_info("SLAVE_MON", $sformatf("Address = %0h , write = %0b",`MON_IF_S.HADDR, `MON_IF_S.HWRITE), UVM_NONE);
  	  addr_q.push_back(addr_item); //push the addr_item in addr queue
           done.put(1);  //semphone put a key so that driver get the key and this two phase work as pipeline
         end
@@ -61,9 +62,9 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
         @(`MON_IF_S);   //change in clocking blocks
         data_item = ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH) :: type_id ::create("data_item"); //data_item create
              data_item.HWDATA.push_back(`MON_IF_S.HWDATA); //assign hwdata from interface to data item
-             `uvm_info("Master Mon Write", $sformatf("WData = %0h", `MON_IF_S.HWDATA), UVM_NONE);
+             //`uvm_info("Master Mon Write", $sformatf("WData = %0h", `MON_IF_S.HWDATA), UVM_NONE);
              data_item.HRDATA = `MON_IF_S.HRDATA;    //assign hrdata from interface to data item
-             `uvm_info("Master Mon Read", $sformatf("RData = %0h", `MON_IF_S.HRDATA), UVM_NONE);
+             //`uvm_info("Master Mon Read", $sformatf("RData = %0h", `MON_IF_S.HRDATA), UVM_NONE);
 	  data_q.push_back(data_item);       //push the data_item in data_queue
     end
   endtask
@@ -86,12 +87,15 @@ class ahb_s_monitor #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_moni
              mon_item.HBURST = temp_addr_item.HBURST;
           if(temp_addr_item.HWRITE) begin   //HWRITE == 1
              mon_item.HWDATA = temp_data_item.HWDATA;
+             `uvm_info("S_MON_WRITE", $sformatf("WData = %0p", temp_data_item.HWDATA), UVM_NONE);
           end
           else begin
              mon_item.HRDATA = temp_data_item.HRDATA;
+             `uvm_info("S_MON_READ", $sformatf("RData = %0p", temp_data_item.HRDATA), UVM_NONE);
           end
+             `uvm_info("S_MON_SAMPLE", $sformatf("Addr = %0p, WData = %0p", temp_addr_item.HADDR, temp_data_item.HWDATA), UVM_NONE);
              ahb_s_item_port.write(mon_item);     //write the mon_item to analysis port
-             `uvm_info("Slave Mon", "Write Done", UVM_NONE);
+             `uvm_info("S_MON", "Write Done", UVM_NONE);
      end
   endtask
 

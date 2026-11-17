@@ -1,14 +1,17 @@
-interface ahb_if (input logic HCLK, HRESETn);
+import ahb_global_pkg::*;
+interface ahb_if #(
+  parameter int ADDR_WIDTH = 32,
+  parameter int DATA_WIDTH = 32)(input logic HCLK, HRESETn);
   
-  logic [31:0] HADDR;
-  logic [31:0] HWDATA;
+  logic [ADDR_WIDTH - 1:0] HADDR;
+  logic [DATA_WIDTH - 1:0] HWDATA;
   logic HWRITE;
   logic [2:0] HBURST;
   logic [2:0] HSIZE;
   logic [1:0] HTRANS;
-  logic [3:0] HWSTRB;
+  logic [(DATA_WIDTH/8)-1:0] HWSTRB;
   
-  logic [31:0] HRDATA;
+  logic [DATA_WIDTH - 1:0] HRDATA;
   logic HREADYOUT;
   logic HRESP;
 

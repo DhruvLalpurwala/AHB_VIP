@@ -2,6 +2,7 @@
 package ahb_pkg;
 `include "uvm_macros.svh"
   import uvm_pkg::*;
+  import ahb_global_pkg::*;
 
 typedef virtual ahb_if vif;
 `include "../Seq_Item/ahb_seq_item.sv"
@@ -10,7 +11,6 @@ typedef virtual ahb_if vif;
 `include "../../VIP/Master/ahb_m_driver.sv"
 `include "../../VIP/Master/ahb_m_monitor.sv"
 `include "../../VIP/Master/ahb_m_agent.sv"
-`include "../../Sequence/ahb_s_sequence.sv"
 `include "../../VIP/Slave/ahb_s_sequencer.sv"
 `include "../../VIP/Slave/ahb_s_driver.sv"
 `include "../../VIP/Slave/ahb_s_monitor.sv"

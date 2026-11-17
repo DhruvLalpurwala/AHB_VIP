@@ -25,7 +25,7 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
   bit HREADYOUT;                          ////Ready signal for inserting the wait states send by slave
   bit HRESP;                              ////Response signal -> "0" for okay and "1" for error send by slave
     
-  `uvm_object_param_utils(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH)) ///register ahb_seq_item at factory
+  `uvm_object_utils(ahb_seq_item #(ADDR_WIDTH, DATA_WIDTH)) ///register ahb_seq_item at factory
   
   function new(string name = "ahb_seq_item");
     super.new(name);
@@ -62,7 +62,15 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
      
   constraint data_size {HWDATA.size() inside {[1:64]};}    //WData queue size is inside [1:64]
 
-  //constraint size_datawidth {HSIZE inside {BIT_8, BIT_16, BIT_32};} // Size <= Data_width of Wdata
+                       // Size <= Data_width of Wdata      
+  constraint size_datawidth {DATA_WIDTH == 8 -> HSIZE == 0;
+                             DATA_WIDTH == 16 -> HSIZE inside {[0:1]};
+                             DATA_WIDTH == 32 -> HSIZE inside {[0:2]};
+                             DATA_WIDTH == 64 -> HSIZE inside {[0:3]};
+                             DATA_WIDTH == 128 -> HSIZE inside {[0:4]};
+                             DATA_WIDTH == 256 -> HSIZE inside {[0:5]};
+                             DATA_WIDTH == 512 -> HSIZE inside {[0:6]};
+                             DATA_WIDTH == 1024 -> HSIZE inside {[0:7]};} 
   
   //// Aligned address boundary according to transfer size
   constraint size_aligned_add_boundary {HSIZE == BIT_16 -> HADDR[0] == 0;         
@@ -72,8 +80,12 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
                    			HSIZE == BIT_256 -> HADDR[4:0] == 5'b0;
                    			HSIZE == BIT_512 -> HADDR[5:0] == 6'b0;
                    			HSIZE == BIT_1024 -> HADDR[6:0] == 7'b0;}
-
+  //Write strobe is 0 for read operation
   constraint write_strobe {if (!HWRITE) {
+                              foreach(HWSTRB[i])
+                              HWSTRB[i] == 0;}}
+  //write strobe is 0 for transfer type is IDLE or BUSY
+  constraint strobe_trans {if((HTRANS == IDLE) || (HTRANS == BUSY)) {
                               foreach(HWSTRB[i])
                               HWSTRB[i] == 0;}}
   
@@ -86,7 +98,24 @@ class ahb_seq_item #(int ADDR_WIDTH = 32, int DATA_WIDTH = 32) extends uvm_seque
 
   constraint strb_size {HWSTRB.size() == burst_length;}
 
-  //// Address should be in 1kb boundary for burst operation
-  constraint ahb_1kb_boundary {soft HADDR/1024 == ((HADDR + (burst_length * (1 << HSIZE)) - 1) / 1024);}
+  //// HWDATA depends on transfer size
+  constraint hwdata_hsize { foreach (HWDATA[i]) {
+				if (HSIZE == 3'b000)
+              				HWDATA[i][DATA_WIDTH-1:8] == 0;
+            			else if (HSIZE == 3'b001)
+                			HWDATA[i][DATA_WIDTH-1:16] == 0;
+            			else if (HSIZE == 3'b010)
+                			HWDATA[i][DATA_WIDTH-1:32] == 0;
+            			else if (HSIZE == 3'b011)
+                			HWDATA[i][DATA_WIDTH-1:64] == 0;
+            			else if (HSIZE == 3'b100)
+                			HWDATA[i][DATA_WIDTH-1:128] == 0;
+            			else if (HSIZE == 3'b101)
+                			HWDATA[i][DATA_WIDTH-1:256] == 0;
+            			else if (HSIZE == 3'b110)
+                			HWDATA[i][DATA_WIDTH-1:512] == 0;}}  
+
+//// Address should be in 1kb boundary for burst operation
+  constraint ahb_1kb_boundary { HADDR/1024 == ((HADDR + (burst_length * (1 << HSIZE)) - 1) / 1024);}
 
 endclass 
